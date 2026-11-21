@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 - unreleased (first public release)
+## 0.1.0 - 2026-11-21 (first public release)
 
 Minecraft 1.21.1, NeoForge 21.1.265 or newer within 21.1, Java 21. Server-side; players joining a
 server do not need it.

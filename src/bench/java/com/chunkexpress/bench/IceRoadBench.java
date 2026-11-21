@@ -145,6 +145,7 @@ public final class IceRoadBench {
     private static long tickStart;
     private static int rideTicks;
     private static final List<Long> tickNanos = new ArrayList<>();
+    private static final List<Integer> serverAhead = new ArrayList<>();
     private static final List<Long> tickIntervalNanos = new ArrayList<>();
     private static int roadChunks;
     private static final List<Long> stallNanos = new ArrayList<>();
@@ -333,6 +334,15 @@ public final class IceRoadBench {
             }
         } else {
             tickNanos.add(tick);
+            // How many chunks ahead along the road the server already has full (ready to send), to tell
+            // a generation bottleneck from a sending one (compare with the client's loaded-ahead count).
+            int bx = boat.getBlockX() >> 4;
+            int bz = boat.getBlockZ() >> 4;
+            int ready = 0;
+            while (ready < 32 && level.getChunkSource().getChunkNow(bx + ready + 1, bz) != null) {
+                ready++;
+            }
+            serverAhead.add(ready);
         }
         rideTicks++;
         if (rideTicks % 280 == 0) {
@@ -458,6 +468,12 @@ public final class IceRoadBench {
 
     /** Server thread: everything the server measured, frozen, then handed to the client thread. */
     private static void finishServerSide(MinecraftServer server, boolean arrived, boolean seated) {
+        if (!serverAhead.isEmpty()) {
+            double avg = serverAhead.stream().mapToInt(Integer::intValue).average().orElse(0);
+            List<Integer> sorted = serverAhead.stream().sorted().toList();
+            LOG.info(String.format(Locale.ROOT, "Ice road: server had full chunks ahead along the road: average %.1f, median %d, least %d (counted up to 32)",
+                    avg, sorted.get(sorted.size() / 2), sorted.get(0)));
+        }
         long rideNanos = System.nanoTime() - rideStart;
         runChunkExpressCommand(server, "chunkexpress status", chunkExpressStatus);
         Map<String, long[]> gcDuring = new LinkedHashMap<>();

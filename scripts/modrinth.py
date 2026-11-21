@@ -22,14 +22,11 @@ API = "https://api.modrinth.com/v2"
 ROOT = Path(__file__).resolve().parent.parent
 LISTING = ROOT / "docs" / "MODRINTH.md"
 ICON = ROOT / "art" / "icon.png"
-# Two consecutive 12-second clips of the same ride (one long GIF would exceed Modrinth's 5 MiB limit).
+# Showcase clip (art/make_showcase_gif.py), under Modrinth's 5 MiB gallery limit.
 SHOWCASE = [
-    (ROOT / "art" / "showcase" / "vanilla-vs-chunkexpress-1.gif", "Vanilla vs Chunk Express (1/2)",
-     "Same seed, real time: a full-speed ice-boat ride, 4-16 s in. "
-     "Vanilla keeps slowing down while it waits for chunks; Chunk Express holds full speed.", False),
-    (ROOT / "art" / "showcase" / "vanilla-vs-chunkexpress-2.gif", "Vanilla vs Chunk Express (2/2)",
-     "The same ride, 16-29 s in: vanilla slows down again, then runs out of loaded road and stops. "
-     "Chunk Express keeps going.", True),
+    (ROOT / "art" / "showcase" / "vanilla-vs-chunkexpress-0.2.0.gif", "Vanilla vs Chunk Express",
+     "Same seed, real time: a full-speed ice-boat ride over new terrain. Vanilla keeps slowing down and "
+     "stops while it waits for chunks; Chunk Express 0.2.0 holds full speed.", True),
 ]
 SLUG = "chunk-express"
 USER_AGENT = "chunk-express-publishing-script"
@@ -129,9 +126,8 @@ def gallery():
         if path.stat().st_size > 5 * 1024 * 1024:
             sys.exit(f"{path.name} is over 5 MiB; rebuild it narrower (art/make_showcase_gif.py --width)")
     status, p = request("GET", f"/project/{SLUG}")
-    titles = {t for _, t, _, _ in SHOWCASE} | {"Vanilla vs Chunk Express"}
     for old in (p.get("gallery") or []) if status < 300 else []:
-        if old.get("title") in titles:
+        if (old.get("title") or "").startswith("Vanilla vs Chunk Express"):
             q = urllib.parse.urlencode({"url": old["url"]})
             print("remove earlier upload:", old.get("title"), request("DELETE", f"/project/{SLUG}/gallery?{q}")[0])
     for order, (path, title, text, featured) in enumerate(SHOWCASE):

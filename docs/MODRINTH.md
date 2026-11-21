@@ -30,8 +30,7 @@ Exploring fast - by elytra, ice boat or in the Nether - makes the server wait fo
 Express runs the parts of vanilla world generation that are safe to run in parallel on your spare CPU
 cores, and checks that the result is identical to vanilla.
 
-![Vanilla vs Chunk Express, part 1](https://cdn.modrinth.com/data/ZgIKW9zV/images/923586c0320f1c038168900df11691b3706a320c.gif)
-![Vanilla vs Chunk Express, part 2](https://cdn.modrinth.com/data/ZgIKW9zV/images/a42cd14ebc8282da1e4a80bed3fedfade8508026.gif)
+![Vanilla vs Chunk Express 0.2.0, same seed, real time](https://cdn.modrinth.com/data/ZgIKW9zV/images/23bdedc5e2f16274b89d46664b19038409d40045.gif)
 
 *Same seed, real time, full speed over new terrain. Amber: vanilla slowed down. Red: vanilla stopped,
 waiting for chunks.*

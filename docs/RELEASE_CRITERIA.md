@@ -20,7 +20,7 @@ nothing known can damage a world.
 | B1 | Stage hashes identical (optimisations on vs off) for the overworld, one seed | ✅ surface and carvers, in and out, 0 of 3,165–4,507 chunks differ |
 | B2 | Same for **3 seeds × all three vanilla dimensions** (overworld, Nether, End) | ✅ 2026-11-21, `-Ppregen` hash pairs (off vs on, surface and carvers in/out): seeds 20261117, 1, -4172144997902289642 × overworld, Nether, End; 0 differences in every pair (e.g. 3,579 and 3,612 shared chunks for the all-dimension runs, 1,451 for the End alone) |
 | B3 | Same for other generator settings: **Large Biomes, Amplified**, and a single-biome world | ✅ 2026-11-21: Large Biomes (1,897 shared chunks), Amplified (1,930), single-biome surface (1,897): 0 differences |
-| B4 | Same with data-pack terrain that uses vanilla rule types (**Terralith**, **Tectonic**): gates allow offloading, output must still match | 🔧 after 👤 approves the downloads |
+| B4 | Same with data-pack terrain that uses vanilla rule types (**Terralith**, **Tectonic**): gates allow offloading, output must still match | 🟡 Terralith ✅ (0 of 4,387 shared chunks differ, O1/O2 on, docs/COMPATIBILITY.md); Tectonic not tested yet (needs a download) |
 | B5 | Fallback really happens in game, not only in unit tests: a test fixture mod adding (a) a custom surface rule type, (b) a custom carver type, (c) a mixin on `SurfaceSystem`, (d) a modded generator → each stage stays on the lane, with the reason logged | ✅ `scripts/fallback-test.sh` (2026-11-21): test-only rule type, carver type and generator (src/gametest `FallbackFixtures` + fixture dimensions) each keep both stages on the lane with the reason naming them; the Nether unaffected. (c) a foreign mixin: seen in game with ModernFix before its review (stages stayed on the lane naming its mixins), plus game test `mixinGateSeesMergedMixins` |
 | B6 | A failure inside an offloaded stage ends in vanilla's fatal crash report (fault injected in a test), never a silent hang | ✅ `scripts/fault-test.sh` (2026-11-21): debug switch `chunkexpress.debug.failStage` throws in one chunk's offloaded surface stage; the game stops with vanilla's "Exception chunk generation/loading" crash report naming the fault, no hang |
 
@@ -44,7 +44,7 @@ nothing known can damage a world.
 | # | Check | Status |
 |---|---|---|
 | B15 | Game tests + one ride with Create + Farmer's Delight | ✅ |
-| B16 | Game tests + one ride with each of: Lithium, FerriteCore, ModernFix, Chunky, Distant Horizons (generates terrain heavily), a TerraBlender mod (e.g. Biomes O' Plenty; gates should fall back) — and all of them together with Create | 🔧 after 👤 approves the downloads |
+| B16 | Game tests + one ride with each of: Lithium, FerriteCore, ModernFix, Chunky, Distant Horizons (generates terrain heavily), a TerraBlender mod (e.g. Biomes O' Plenty; gates should fall back) — and all of them together with Create | 🟡 Lithium, FerriteCore, ModernFix ✅ (with Create, Farmer's Delight, Terralith, JEI, Jade, Infinite Railways; game tests and kill test pass); Chunky, Distant Horizons and a TerraBlender mod not tested yet (need downloads) |
 
 ### Publishing
 | # | Check | Status |

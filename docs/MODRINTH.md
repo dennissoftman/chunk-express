@@ -58,7 +58,7 @@ Use one or the other: Chunk Express won't start alongside C2ME or Moonrise.
 ## Compatibility
 
 **Tested:** Create, Farmer's Delight, Lithium, FerriteCore, ModernFix, Terralith, JEI, Jade,
-Create: Infinite Railways, Railways Untold, Steam 'n' Rails.
+Create: Infinite Railways, Railways Untold, Steam 'n' Rails, ScalableLux.
 
 **Not tested yet:** other mods, for example Tectonic, Biomes O' Plenty, Distant Horizons and Chunky.
 That doesn't mean they don't work - only that we haven't checked. Reports are welcome.

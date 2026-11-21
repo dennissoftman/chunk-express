@@ -191,7 +191,10 @@ public final class ReviewedPatches {
             new Patch("create", "6.0.10", "create.mixins.json", "com.simibubi.create.foundation.mixin.accessor.FlowingFluidAccessor",
                     "Invoker for FlowingFluid.getNewLiquid: calls vanilla's method, whose reads are exact under O4."),
             new Patch("flywheel", "1.0.6", "flywheel.impl.mixins.json", "dev.engine_room.flywheel.impl.mixin.visualmanage.LevelChunkMixin",
-                    "Queues block-entity visuals in LevelChunk.setBlockEntity (rendering); no block or fluid reads."));
+                    "Queues block-entity visuals in LevelChunk.setBlockEntity (rendering); no block or fluid reads."),
+            new Patch("scalablelux", "0.3.0-alpha.0.8+1.21.1", "scalablelux.mixins.json", "ca.spottedleaf.starlight.mixin.common.chunk.LevelChunkMixin",
+                    "Copies its light arrays into the chunk when it becomes full, and skips vanilla's sky-light-source update in "
+                            + "setBlockState (it tracks sky light itself); block and fluid reads are unchanged."));
 
     /** Every reviewed patch. */
     public static List<Patch> all() {

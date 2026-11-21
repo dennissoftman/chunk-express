@@ -63,6 +63,7 @@ Not the scenario suite below — these only show that nothing breaks at the most
 | Terralith + Lithostitched + Create + Farmer's Delight | as above | 1,000-block ride (2026-11-21) | ride completes; both stages on worker threads, each reviewed patch named in the log |
 | ModernFix | 5.27.27 | 4,000-block rides with stage hashes, O1/O2 off vs on; game tests with the popular set (2026-11-21) | its 7 patches on the surface code (`optimize_surface_rules`, `worldgen_allocation`, `chunk_deadlock`) reviewed for 5.27.27+mc1.21.1, so O1 and O2 stay on. Stage hashes at surface and carvers in/out: **0 of 4,874 shared chunks differ**. 12/12 game tests |
 | Create: Infinite Railways + Railways Untold + Steam 'n' Rails (+ Create) | 0.1.2, 1.2.2, 0.3.0-beta.2 | 5,000-block ride; game tests with every compat mod; hard-kill test at 3,020 blocks (2026-11-21) | ride completes, O1/O2 on (none of them patch the moved code); 12/12 game tests; kill test PASS (40 region files, 6,702 chunks, no problems; reopened, 0 chunk errors). Their station scan does not go through the generation stages, so Chunk Express does not speed it up |
+| ScalableLux | 0.3.0-alpha.0.8 | game tests with every compat mod; two 5,000-block rides and a hard-kill test with Create + Farmer's Delight; O4 verify ride (2026-11-21) | 12/12 game tests; rides complete, 0 stalls; kill test PASS (42 region files, 8,550 chunks clean, reopened with 0 errors). O1-O3 on. O4 on after reviewing its Starlight `LevelChunkMixin` (light arrays, sky-light sources; no block reads): 137.8 million reads compared, 0 mismatches. Light stage 4.7 -> 0.8 ms per chunk; chunks loaded ahead 7.5 and 8.1 (7.2 without it) |
 | Popular set: Create, Farmer's Delight, Terralith, Lithostitched, Lithium 0.15.4, FerriteCore 7.0.3, ModernFix 5.27.27, JEI 19.64.0.455, Jade 15.10.6 | as listed | Ice-road ride; all game tests; hard-kill test at 3,020 blocks (2026-11-20) | ride completes; 11/11 game tests; kill test PASS (41 region files, 6,241 chunks, no problems; reopened, 0 chunk errors). First run crashed at start-up on Lithium; fixed by marking Lithium CONFLICTING for the chunk-wait probe |
 
 Moonrise is not tested: it is declared incompatible with Chunk Express, and it is incompatible with
@@ -75,7 +76,7 @@ every jar from there (except C2ME and Moonrise) into `run/compat/mods`.
 
 Status UNKNOWN: we have not run them with Chunk Express, which says nothing either way about whether
 they work. Tectonic, Biomes O' Plenty and other TerraBlender-based mods, Distant Horizons, Chunky,
-Applied Energistics 2, Immersive Engineering, Noisium, ScalableLux, and every mod not named on this
+Applied Energistics 2, Immersive Engineering, Noisium, and every mod not named on this
 page. For world generation the gates still apply: a mod-added type or an unreviewed patch on the
 moved code keeps that stage vanilla, logged with the reason.
 

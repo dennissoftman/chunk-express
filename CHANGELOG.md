@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 - unreleased
+
+- Fast fluid settling now also works with ScalableLux 0.3.0-alpha.0.8 (its chunk patch was reviewed).
+- Tested with ScalableLux: game tests, rides and the hard-kill test pass.
+
 ## 0.2.0 - 2026-11-21
 
 ### Faster generation

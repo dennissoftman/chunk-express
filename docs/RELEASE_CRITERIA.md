@@ -30,7 +30,7 @@ nothing known can damage a world.
 | B7 | Existing world made without Chunk Express: add it, explore new terrain, remove it, reload — no errors, no changed chunks outside the new area | ✅ `scripts/addremove-test.sh` (2026-11-21): vanilla world, reopened with Chunk Express into new terrain, then reopened in vanilla without it; every step 0 chunk errors and a clean region check |
 | B8 | A world upgraded from an older Minecraft version (old/new chunk blending runs inside surface and carvers) | 🔧 needs an old world; I can create one only if 👤 provides one or approves downloading an older game version |
 | B9 | Singleplayer: open several worlds one after another in one session; no state leaks between them | ✅ `scripts/sessions-test.sh` (2026-11-21): three new worlds in one game session via vanilla's save-and-quit; Chunk Express decides afresh and writes one summary per world, 0 errors |
-| B10 | **Dedicated server** run (only integrated and game-test servers so far) | 👤 accept the Minecraft EULA for the dev server, then 🔧 |
+| B10 | **Dedicated server** run (only integrated and game-test servers so far) | ✅ `scripts/server-test.sh` (2026-11-21): fresh NeoForge dedicated server driven over RCON; 561 new chunks with surface and carvers on worker threads (1 warm-up chunk on the lane), status command answered, clean save and stop, 0 log errors, region check clean (2,362 chunks) |
 
 ### Performance (no regressions anywhere)
 | # | Check | Status |
@@ -49,8 +49,8 @@ nothing known can damage a world.
 ### Publishing
 | # | Check | Status |
 |---|---|---|
-| B17 | Source public (GPL-3.0), issue tracker linked from the listing | 👤 |
-| B18 | Version set (`0.1.0`, released on the Beta channel / as a GitHub pre-release), changelog and listing numbers match docs/BENCHMARKS.md | 🔧 |
+| B17 | Source public (GPL-3.0), issue tracker linked from the listing | ✅ source public at https://github.com/dennissoftman/chunk-express (GPL-3.0-only); issues there |
+| B18 | Version set (`0.1.0`, released on the Beta channel / as a GitHub pre-release), changelog and listing numbers match docs/BENCHMARKS.md | ✅ `mod_version=0.1.0`; release notes come from CHANGELOG.md via `scripts/release.sh` and the release workflow |
 
 ## Release — recommended for everyone
 

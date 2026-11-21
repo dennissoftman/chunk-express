@@ -138,8 +138,11 @@ neoForge {
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
+        // Dedicated server in its own folder (run/server), apart from the game-test world in run/.
+        // scripts/server-test.sh drives it over RCON.
         server {
             server()
+            gameDirectory = project.file('run/server')
             loadedMods = [mods.chunkexpress]
             programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id

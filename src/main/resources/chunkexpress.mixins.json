@@ -11,7 +11,9 @@
     "probe.RegionFileMixin",
     "probe.ChunkStepMixin",
     "probe.ServerChunkCacheMixin",
-    "optimization.StageOffloadMixin"
+    "optimization.StageOffloadMixin",
+    "optimization.FluidSettlingMixin",
+    "optimization.FlowingFluidReadMixin"
   ],
   "injectors": {
     "defaultRequire": 0

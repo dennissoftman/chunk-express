@@ -353,3 +353,54 @@ changing results. Not done. For reference, on the server thread (2,090 samples) 
 serialization on unload (`ChunkSerializer.write` via `ChunkMap.processUnloads`) is 217 samples,
 about 10%: the candidate for the next optimisation (chunk saving off the server thread).
 
+## O4 - Fast fluid settling (`fastFluidSettling`)
+
+**Status:** implemented for 0.2.0, default on, gated.
+
+### Evidence
+
+Profile of a full-speed ride (O1-O3 on): 74% of the server thread's work while exploring is
+`LevelChunk.postProcessGeneration`, where vanilla settles the fluids generation marked (aquifers,
+cave and ocean edges) as a chunk becomes full. Inside it, `FlowingFluid.getNewLiquid`'s neighbour
+reads dominate, and a large part of those is `ServerChunkCache.getChunk`: every `Level.getBlockState`
+looks the chunk up again, although nearly every read is of the chunk being settled. (Vanilla 1.21.1
+already caches states and holes inside `getSpread`; its recursion is negligible in the profile.)
+
+### What it does
+
+While a chunk is settled, on the thread settling it, `FlowingFluid`'s `getBlockState` /
+`getFluidState` reads of positions inside that chunk are answered by the chunk itself, after the same
+build-height check `Level` does. That is `Level.getBlockState`/`getFluidState` minus the chunk lookup:
+the identical object is returned. Other positions, threads and code are unchanged.
+
+### Gates
+
+Config switch; no unreviewed mixins on `FlowingFluid`, `WaterFluid`, `LavaFluid`, `FluidState`,
+`LevelChunk`; no other mod's merged `getBlockState`/`getFluidState`/`getChunk`/`getChunkAt` on
+`Level` or `ServerLevel`. Reviewed: Create 6.0.10 `WaterWheelFluidSpreadMixin` (reads through the
+level, writes nothing) and `FlowingFluidAccessor` (invoker), Flywheel 1.0.6 `LevelChunkMixin`
+(block-entity visuals, no reads).
+
+### Verification
+
+Debug verify mode (`-Dchunkexpress.debug.verifyFluidReads=true`): every shortcut read is also made
+the vanilla way and compared; the game keeps vanilla's answer. 2026-11-21: 3 seeds x overworld,
+Nether, End; Large Biomes; Amplified; Terralith; a 3,000-block ride with Create and Farmer's
+Delight: about 260 million reads compared, **0 mismatches**, no crashes. (Chunk hashes are not used
+here: settling can flow across chunk edges, so its result depends on the order neighbouring chunks
+become full, even in vanilla.)
+
+### Results
+
+Time inside `postProcessGeneration`, measured by Chunk Express itself, pre-generating the same 729
+overworld chunks (seed 1), two runs each:
+
+| | Run 1 | Run 2 |
+|---|---|---|
+| Vanilla | 7.13 ms per chunk | 6.85 ms per chunk |
+| O4 | 6.45 ms per chunk | 6.07 ms per chunk |
+
+About 10% less settling time, i.e. roughly 5% less server-thread work while exploring. Smaller than
+the profile suggested: the chunk lookups disappear (263 -> 58 samples), but wrapping every fluid read
+costs part of the saving. A lower-overhead hook could gain more; not done yet.
+

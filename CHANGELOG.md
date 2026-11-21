@@ -10,6 +10,10 @@
   Large Biomes, Amplified and Terralith.
 - Works with Terralith/Lithostitched 1.8.1 for all three stages: its patches to the structure code
   were reviewed.
+- **`fastFluidSettling`** (default on): when a new chunk becomes a full chunk, vanilla settles its
+  water and lava on the server thread. Those checks now read blocks of that chunk directly instead of
+  looking the chunk up for every block: identical results (checked read by read), about 10% less
+  settling time. Works with Create (its fluid patch was reviewed).
 
 ### Fixes
 

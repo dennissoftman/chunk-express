@@ -15,6 +15,7 @@ public final class ChunkExpressConfig {
     private static final ModConfigSpec.BooleanValue OFFLOAD_SURFACE;
     private static final ModConfigSpec.BooleanValue OFFLOAD_CARVERS;
     private static final ModConfigSpec.BooleanValue OFFLOAD_STRUCTURE_STARTS;
+    private static final ModConfigSpec.BooleanValue FAST_FLUID_SETTLING;
 
     static {
         Settings defaults = Settings.defaults();
@@ -59,6 +60,12 @@ public final class ChunkExpressConfig {
                         "with no mod-added structure, piece, pool-element, processor or pool-alias types and no other",
                         "mod patching the structure code. false = exactly vanilla.")
                 .define("offloadStructureStarts", defaults.offloadStructureStarts());
+        FAST_FLUID_SETTLING = b
+                .comment("When a newly generated chunk becomes a full chunk, vanilla settles its water and lava. With",
+                        "this on, those fluid checks read blocks of that chunk directly instead of looking the chunk",
+                        "up for every block: the same result, less work on the server thread. Off when another mod",
+                        "patches the fluid code or how the level reads blocks. false = exactly vanilla.")
+                .define("fastFluidSettling", defaults.fastFluidSettling());
         b.pop();
 
         SPEC = b.build();
@@ -73,6 +80,6 @@ public final class ChunkExpressConfig {
             return Settings.defaults();
         }
         return new Settings(INSTRUMENTATION.get(), LOG_SESSION_SUMMARY.get(), SLOW_WRITE_WARN_MILLIS.get(),
-                OFFLOAD_SURFACE.get(), OFFLOAD_CARVERS.get(), OFFLOAD_STRUCTURE_STARTS.get());
+                OFFLOAD_SURFACE.get(), OFFLOAD_CARVERS.get(), OFFLOAD_STRUCTURE_STARTS.get(), FAST_FLUID_SETTLING.get());
     }
 }

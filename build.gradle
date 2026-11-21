@@ -81,7 +81,7 @@ def syncBenchMods = tasks.register('syncBenchMods') {
 // Without any of them the config file in run/bench/config is left as it is.
 def allOptimizations = project.findProperty('optimizations')?.toString()
 def pinnedOptimizations = [:]
-['offloadSurface', 'offloadCarvers', 'offloadStructureStarts'].each { key ->
+['offloadSurface', 'offloadCarvers', 'offloadStructureStarts', 'fastFluidSettling'].each { key ->
     def value = project.findProperty(key)?.toString() ?: (allOptimizations == null ? null : (allOptimizations == 'on').toString())
     if (value != null) {
         pinnedOptimizations[key] = value

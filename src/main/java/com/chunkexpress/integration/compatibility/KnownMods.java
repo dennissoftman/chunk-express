@@ -28,7 +28,9 @@ public final class KnownMods {
 
     /** Mixins that change behaviour; each also has a config switch and falls back to vanilla on its own. */
     public static final String STAGE_OFFLOAD = "StageOffloadMixin";
-    public static final List<String> OPTIMIZATIONS = List.of(STAGE_OFFLOAD);
+    public static final String FLUID_SETTLING = "FluidSettlingMixin";
+    public static final String FLUID_READS = "FlowingFluidReadMixin";
+    public static final List<String> OPTIMIZATIONS = List.of(STAGE_OFFLOAD, FLUID_SETTLING, FLUID_READS);
 
     /** Every mixin we ship, for the kill switch and status output. Must match chunkexpress.mixins.json. */
     public static final List<String> ALL_MIXINS = java.util.stream.Stream.concat(ALL_PROBES.stream(), OPTIMIZATIONS.stream())
@@ -36,7 +38,7 @@ public final class KnownMods {
 
     /** Probes on code that chunk-system replacements bypass or rewrite. */
     private static final Set<String> STORAGE_AND_LOAD_PROBES =
-            Set.of(CHUNK_MAP_PROBE, IO_WORKER_PROBE, GENERATION_PROBE, CHUNK_WAIT_PROBE, STAGE_OFFLOAD);
+            Set.of(CHUNK_MAP_PROBE, IO_WORKER_PROBE, GENERATION_PROBE, CHUNK_WAIT_PROBE, STAGE_OFFLOAD, FLUID_SETTLING, FLUID_READS);
 
     public static final List<KnownMod> ALL = List.of(
             // Chunk-system replacements: declared incompatible in neoforge.mods.toml, so NeoForge will

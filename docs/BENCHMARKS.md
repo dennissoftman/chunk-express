@@ -198,3 +198,30 @@ Chunk Express is no worse than vanilla at any of these core counts, and frame ra
 there is no core-count switch: the gates stay the only reason a stage keeps vanilla's lane. Average
 server tick work is slightly higher with Chunk Express (more chunks arrive per tick to be loaded).
 
+## Chunk Express 0.2.0, vanilla and C2ME (2026-11-21)
+
+Same benchmark and setup as the engine comparison above (5,000-block ice road, seed 20261117,
+render distance 12, Create 6.0.10 and Farmer's Delight 1.3.4), all nine rides in one session:
+vanilla and Chunk Express 0.2.0 alternating (all optimisations on: O1 surface, O2 carvers, O3
+structure starts, O4 fluid settling), then C2ME 0.4.0-alpha.0.124. Medians, [range]:
+
+| | Vanilla | Chunk Express 0.2.0 | C2ME |
+|---|---|---|---|
+| Server waiting for chunks per ride | 10.9 s [10.2-12.7] | 0 s [0-0] | 0 s [0-0] |
+| Road chunks not ready in time (of 624) | 124 [103-132] | 0 | 0 |
+| Worst tick interval | 680 ms [607-715] | 240 ms [145-248] | 83 ms [74-87] |
+| Tick interval p95 | 60.6 ms | 56.4 ms | 53.1 ms |
+| Server tick work, average | 4.5 ms | 7.4 ms | - |
+| Chunks loaded ahead on screen (of 12) | 4.5 [4.4-4.5] | 7.4 [7.3-7.8] | 11.1 [11.0-11.1] |
+| Frames, average / 1% low | 117 / 114 fps | 117 / 111 fps | 115 / 108 fps |
+
+Reading it:
+
+- Vanilla waited less in this session than in the earlier comparison (10.9 s against 26.2 s): the
+  machine had less other load. Only numbers from the same session are compared.
+- Chunk Express 0.2.0 no longer made the server wait at all on this ride (0.1.0: 0.45 s), and
+  loaded 7.4 of 12 chunks ahead (0.1.0: 6.9). C2ME still loads the most ahead and has the smallest
+  hiccups.
+- Chunk Express' server tick work is higher on average because more new terrain arrives per tick to
+  be finished; TPS stayed at 20 in every ride.
+

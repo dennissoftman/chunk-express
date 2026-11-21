@@ -183,10 +183,21 @@ public final class ReviewedPatches {
         return new Split(List.copyOf(reviewed), List.copyOf(unreviewed));
     }
 
+    /** Create and its bundled Flywheel, for O4 (fluid settling). Reviewed 2026-11-21. */
+    private static final List<Patch> CREATE_PATCHES = List.of(
+            new Patch("create", "6.0.10", "create.mixins.json", "com.simibubi.create.foundation.mixin.WaterWheelFluidSpreadMixin",
+                    "At the start of FlowingFluid.canPassThrough, lets water pass water-wheel structure blocks: reads blocks "
+                            + "through the level (exact under O4), writes nothing."),
+            new Patch("create", "6.0.10", "create.mixins.json", "com.simibubi.create.foundation.mixin.accessor.FlowingFluidAccessor",
+                    "Invoker for FlowingFluid.getNewLiquid: calls vanilla's method, whose reads are exact under O4."),
+            new Patch("flywheel", "1.0.6", "flywheel.impl.mixins.json", "dev.engine_room.flywheel.impl.mixin.visualmanage.LevelChunkMixin",
+                    "Queues block-entity visuals in LevelChunk.setBlockEntity (rendering); no block or fluid reads."));
+
     /** Every reviewed patch. */
     public static List<Patch> all() {
         List<Patch> all = new ArrayList<>(ALL);
         all.addAll(MODERNFIX_PATCHES);
+        all.addAll(CREATE_PATCHES);
         return List.copyOf(all);
     }
 

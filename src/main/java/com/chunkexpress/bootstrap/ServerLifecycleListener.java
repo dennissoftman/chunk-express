@@ -43,10 +43,11 @@ public final class ServerLifecycleListener {
                 Thread.currentThread(),
                 compat);
         ChunkExpressRuntime.install(runtime);
-        Logs.LOG.info("Chunk Express {} starting (server: {}; optimisations: surface {}, carvers {}, structure starts {}; "
+        Logs.LOG.info("Chunk Express {} starting (server: {}; optimisations: surface {}, carvers {}, structure starts {}, fluid settling {}; "
                         + "instrumentation {}; region writes {}).",
                 ChunkExpress.version(), runtime.serverKind(), settings.offloadSurface() ? "on" : "off",
                 settings.offloadCarvers() ? "on" : "off", settings.offloadStructureStarts() ? "on" : "off",
+                settings.fastFluidSettling() ? "on" : "off",
                 settings.instrumentation() ? "on" : "off",
                 runtime.synchronousWrites() ? "synchronous (DSYNC)" : "OS-buffered");
         for (String line : compat.describe()) {
@@ -98,7 +99,7 @@ public final class ServerLifecycleListener {
             }
             if (rt.settings().logSessionSummary()) {
                 for (String line : StatusReport.render(rt, ChunkExpress.version(), ProbeRegistry.states(),
-                        com.chunkexpress.integration.generation.StageOffload.statusLines())) {
+                        java.util.stream.Stream.concat(com.chunkexpress.integration.generation.StageOffload.statusLines().stream(), com.chunkexpress.integration.generation.FluidSettling.statusLines().stream()).toList())) {
                     Logs.LOG.info("[summary] {}", line);
                 }
             }

@@ -16,16 +16,18 @@ package com.chunkexpress.config;
  *                             {@code integration.generation.StageOffload}); false = vanilla behaviour
  * @param offloadCarvers       the same for the "carvers" stage
  * @param offloadStructureStarts the same for the "structure_starts" stage (O3)
+ * @param fastFluidSettling    O4: answer fluid settling's reads of the chunk being settled from that chunk
  */
 public record Settings(boolean instrumentation, boolean logSessionSummary, int slowWriteWarnMillis,
-                       boolean offloadSurface, boolean offloadCarvers, boolean offloadStructureStarts) {
+                       boolean offloadSurface, boolean offloadCarvers, boolean offloadStructureStarts,
+                       boolean fastFluidSettling) {
 
     public static Settings defaults() {
-        return new Settings(true, true, 10_000, true, true, true);
+        return new Settings(true, true, 10_000, true, true, true, true);
     }
 
     /** Whether any optimisation is switched on. */
     public boolean anyOptimisation() {
-        return this.offloadSurface || this.offloadCarvers || this.offloadStructureStarts;
+        return this.offloadSurface || this.offloadCarvers || this.offloadStructureStarts || this.fastFluidSettling;
     }
 }

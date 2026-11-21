@@ -38,8 +38,8 @@ waiting for chunks.*
 
 ## Why install it
 
-- **Far less waiting for chunks.** Crossing 5,000 blocks of new terrain at ice-boat speed, the server
-  waited 26 s for chunks in vanilla and 0.45 s with Chunk Express.
+- **No more waiting for chunks.** Crossing 5,000 blocks of new terrain at ice-boat speed, the server
+  waited 11 s for chunks in vanilla and not once with Chunk Express.
 - **Your world stays vanilla.** Terrain is checked block for block against vanilla across seeds,
   dimensions and world types. Nothing is added to your save, and you can remove the mod at any time.
 - **Safe by design.** It steps aside on its own where another mod changes the same world generation,
@@ -50,8 +50,8 @@ waiting for chunks.*
 
 | | Vanilla | Chunk Express | C2ME |
 |---|---|---|---|
-| Waiting for chunks per ride | 26 s | 0.45 s | 0 s |
-| Worst server hiccup | 676 ms | 245 ms | 75 ms |
+| Waiting for chunks per ride | 11 s | 0 s | 0 s |
+| Worst server hiccup | 680 ms | 240 ms | 83 ms |
 
 C2ME is faster; Chunk Express keeps terrain identical to vanilla and changes far less of the game.
 Use one or the other: Chunk Express won't start alongside C2ME or Moonrise.

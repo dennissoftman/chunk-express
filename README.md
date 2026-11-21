@@ -48,14 +48,15 @@ folders, and the mod can be removed at any time.
 ## Results so far
 
 Ice-road benchmark: a boat crossing 5,000 blocks of fresh terrain at full speed, with Create and
-Farmer's Delight installed; medians of three rides each
-([full table and method](docs/BENCHMARKS.md#engine-comparison-vanilla-chunkexpress-c2me-with-create--farmers-delight)):
+Farmer's Delight installed; medians of three rides each, all measured in one session (Chunk Express
+0.2.0, 2026-11-21; [full table and method](docs/BENCHMARKS.md#chunk-express-020-vanilla-and-c2me-2026-11-21)):
 
-| | Vanilla | Chunk Express | C2ME |
+| | Vanilla | Chunk Express 0.2.0 | C2ME |
 |---|---|---|---|
-| Server waiting for chunks per ride | 26.2 s | 0.45 s | 0 s |
-| Worst server hiccup | 676 ms | 245 ms | 75 ms |
-| Chunks loaded ahead on screen (of 12) | 4.4 | 6.9 | 11.3 |
+| Server waiting for chunks per ride | 10.9 s | 0 s | 0 s |
+| Worst server hiccup | 680 ms | 240 ms | 83 ms |
+| Chunks loaded ahead on screen (of 12) | 4.5 | 7.4 | 11.1 |
+| Frames, average / 1% low | 117 / 114 fps | 117 / 111 fps | 115 / 108 fps |
 | Terrain identical to vanilla | — | verified bit-for-bit | not measured |
 
 C2ME is faster; Chunk Express changes far less and verifies what it changes. They cannot be installed

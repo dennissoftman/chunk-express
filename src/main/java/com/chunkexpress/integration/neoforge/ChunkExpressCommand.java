@@ -38,7 +38,7 @@ public final class ChunkExpressCommand {
             return 0;
         }
         send(source, StatusReport.render(rt, ChunkExpress.version(), ProbeRegistry.states(),
-                        com.chunkexpress.integration.generation.StageOffload.statusLines()));
+                        java.util.stream.Stream.concat(com.chunkexpress.integration.generation.StageOffload.statusLines().stream(), com.chunkexpress.integration.generation.FluidSettling.statusLines().stream()).toList()));
         return 1;
     }
 

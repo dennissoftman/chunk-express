@@ -336,3 +336,20 @@ One apparent difference with Terralith (chunk 0,22) also differed between two ru
 the hash used the pool element's `toString()`, which for some elements contains identity hash
 codes. Pool elements are now hashed by their codec encoding; with that, all three runs agree.
 
+## Considered and not done: caching height and biome sampling (2026-11-21)
+
+Profiled with Java Flight Recorder on a 5,000-block ice-road ride with O1, O2 and O3 on (no other
+mods; 0 chunk stalls on that ride). Of 19,586 worker-thread samples:
+
+| Work | Samples | Share |
+|---|---|---|
+| Column height sampling (`NoiseBasedChunkGenerator.iterateNoiseColumn`: structure placement checks, jigsaw `getFirstFreeHeight`, ruined portals, buried treasure, ...) | 99 | 0.5% |
+| Biome sampling for structures (ocean monument `getBiomesWithin`, `isValidBiome`) | ~33 | 0.2% |
+| Biome sampling in the biomes stage itself (real generation, not repeated) | 890 | 4.5% |
+| Stronghold ring search (`generateRingPositions`, once per world) | 223 | 1.1% |
+
+Even a perfect cache of the repeated part would save under 1% of worker time, against a real risk of
+changing results. Not done. For reference, on the server thread (2,090 samples) chunk
+serialization on unload (`ChunkSerializer.write` via `ChunkMap.processUnloads`) is 217 samples,
+about 10%: the candidate for the next optimisation (chunk saving off the server thread).
+

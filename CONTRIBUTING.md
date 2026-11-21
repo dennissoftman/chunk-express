@@ -51,3 +51,13 @@ file. Include the output of `/chunkexpress status` and the log lines starting wi
 
 Chunk Express is GPL-3.0-only. By contributing, you agree that your contribution is licensed under the
 same terms.
+
+## Releasing
+
+1. Write the player-facing notes under `## <version> - unreleased` in CHANGELOG.md, and set
+   `mod_version` in gradle.properties to the same version.
+2. Run `scripts/release.sh <version>`: it dates the changelog section, commits, tags `v<version>` and
+   pushes.
+3. The tag starts `.github/workflows/release.yml`: build, unit and game tests, then a GitHub Release
+   with the jar attached and that changelog section as the notes (0.x versions are marked
+   pre-release).

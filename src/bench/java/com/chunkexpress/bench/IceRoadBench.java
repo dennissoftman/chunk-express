@@ -547,12 +547,17 @@ public final class IceRoadBench {
                 if (worldsDone < SESSIONS) {
                     LOG.info("Pregen: world {} of {} done; leaving it for the next", worldsDone, SESSIONS);
                     minecraft.execute(() -> {
-                        minecraft.disconnect(); // returns once the integrated server has shut down
+                        // Vanilla's "Save and Quit to Title" (PauseScreen.onDisconnect), then the next world.
+                        minecraft.level.disconnect();
+                        minecraft.disconnect(new net.minecraft.client.gui.screens.GenericMessageScreen(
+                                net.minecraft.network.chat.Component.literal("Saving world")));
+                        TitleScreen title = new TitleScreen();
+                        minecraft.setScreen(title);
                         stage = 0;
                         serverTicks = 0;
                         pregenNext = 0;
                         pregenTarget = 0;
-                        startWorld(new TitleScreen());
+                        startWorld(title);
                     });
                 } else {
                     minecraft.execute(minecraft::stop);

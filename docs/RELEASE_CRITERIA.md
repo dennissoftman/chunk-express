@@ -27,9 +27,9 @@ nothing known can damage a world.
 ### Worlds
 | # | Check | Status |
 |---|---|---|
-| B7 | Existing world made without Chunk Express: add it, explore new terrain, remove it, reload — no errors, no changed chunks outside the new area | 🔧 |
+| B7 | Existing world made without Chunk Express: add it, explore new terrain, remove it, reload — no errors, no changed chunks outside the new area | ✅ `scripts/addremove-test.sh` (2026-11-21): vanilla world, reopened with Chunk Express into new terrain, then reopened in vanilla without it; every step 0 chunk errors and a clean region check |
 | B8 | A world upgraded from an older Minecraft version (old/new chunk blending runs inside surface and carvers) | 🔧 needs an old world; I can create one only if 👤 provides one or approves downloading an older game version |
-| B9 | Singleplayer: open several worlds one after another in one session; no state leaks between them | 🔧 |
+| B9 | Singleplayer: open several worlds one after another in one session; no state leaks between them | ✅ `scripts/sessions-test.sh` (2026-11-21): three new worlds in one game session via vanilla's save-and-quit; Chunk Express decides afresh and writes one summary per world, 0 errors |
 | B10 | **Dedicated server** run (only integrated and game-test servers so far) | 👤 accept the Minecraft EULA for the dev server, then 🔧 |
 
 ### Performance (no regressions anywhere)

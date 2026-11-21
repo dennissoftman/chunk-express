@@ -421,3 +421,11 @@ differ, surface and carvers 0 of 1,970. Game tests 12/12. O4 stays vanilla there
 patches the fluid code (`fluid.flow.FlowingFluidMixin`, `flatten_states.FluidStateMixin`): Lithium
 has its own fluid-flow optimisation for the same code.
 
+### O4 and Lithium (2026-11-21)
+
+With Lithium 0.15.4, O4 steps aside (Lithium patches `FlowingFluid` and `FluidState` with its own
+fluid-flow optimisation). Same 729-chunk measurement as above: Lithium 6.76 / 6.06 ms settling per
+chunk, against vanilla 7.13 / 6.85 and O4 6.45 / 6.07. Lithium's optimisation gains about as much as
+O4, so nothing is lost by stepping aside, and no compatibility layer is planned: stacking the two
+would mean running O4's shortcut inside methods Lithium replaces, for little expected gain.
+

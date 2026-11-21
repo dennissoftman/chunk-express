@@ -404,3 +404,20 @@ About 10% less settling time, i.e. roughly 5% less server-thread work while expl
 the profile suggested: the chunk lookups disappear (263 -> 58 samples), but wrapping every fluid read
 costs part of the saving. A lower-overhead hook could gain more; not done yet.
 
+### O3 with the full compatibility set (2026-11-21)
+
+Three more patches on the structure code, reviewed for O3:
+
+| Mod | Mixin | Finding |
+|---|---|---|
+| Steam 'n' Rails 0.3.0-beta.2 | `StructureMixin` | adds data versions in `StructureTemplate.save` (template to NBT); not part of structure starts |
+| ModernFix 5.27.27 | `perf.cache_strongholds.ChunkGeneratorMixin` | caches stronghold ring positions in `generateRingPositions`, which runs once when the dimension is created |
+| ModernFix 5.27.27 | `perf.dynamic_structure_manager.StructureManagerMixin` | template repository as a soft-valued Guava cache (concurrent map); loads outside the lock and keeps the first of racing loads (`putIfAbsent`; losers return the winner's template). Templates in use cannot be collected; a reload reads the same files |
+
+With every compatibility mod (Create, Farmer's Delight, Steam 'n' Rails, Railways Untold, Infinite
+Railways, Terralith, Lithostitched, Lithium, ModernFix, FerriteCore, ScalableLux, JEI, Jade):
+O1-O3 on; stage hashes off vs on, overworld and Nether: structure starts 0 of 5,624 shared chunks
+differ, surface and carvers 0 of 1,970. Game tests 12/12. O4 stays vanilla there because Lithium
+patches the fluid code (`fluid.flow.FlowingFluidMixin`, `flatten_states.FluidStateMixin`): Lithium
+has its own fluid-flow optimisation for the same code.
+

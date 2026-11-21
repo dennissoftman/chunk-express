@@ -4,6 +4,9 @@
 
 - Fast fluid settling now also works with ScalableLux 0.3.0-alpha.0.8 (its chunk patch was reviewed).
 - Tested with ScalableLux: game tests, rides and the hard-kill test pass.
+- Structure starts now also run in parallel with Steam 'n' Rails 0.3.0-beta.2 and ModernFix 5.27.27
+  (their structure-code patches were reviewed); checked identical to vanilla with the full
+  compatibility set.
 
 ## 0.2.0 - 2026-11-21
 

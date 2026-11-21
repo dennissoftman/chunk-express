@@ -143,6 +143,13 @@ public final class ReviewedPatches {
                             + "list and the per-chunk context only."),
             modernfix("perf.worldgen_allocation.SequenceRuleMixin",
                     "Replaces SequenceRule.tryApply's iterator with an index loop over the same immutable rule list: reads only."),
+            modernfix("perf.cache_strongholds.ChunkGeneratorMixin",
+                    "Caches stronghold ring positions to a file in generateRingPositions, which runs once when the dimension is "
+                            + "created, before any chunk generates; nothing of it runs during structure starts."),
+            modernfix("perf.dynamic_structure_manager.StructureManagerMixin",
+                    "Template repository as a soft-valued Guava cache (a concurrent map); get loads outside the lock and keeps "
+                            + "the first of racing loads (putIfAbsent, losers return the winner's template). Templates in use "
+                            + "cannot be collected; a reload reads the same files."),
             modernfix("perf.worldgen_allocation.SurfaceRulesContextMixin",
                     "Replaces Context.updateY with a version that reuses a position and supplier owned by the per-chunk Context."));
 
@@ -192,6 +199,8 @@ public final class ReviewedPatches {
                     "Invoker for FlowingFluid.getNewLiquid: calls vanilla's method, whose reads are exact under O4."),
             new Patch("flywheel", "1.0.6", "flywheel.impl.mixins.json", "dev.engine_room.flywheel.impl.mixin.visualmanage.LevelChunkMixin",
                     "Queues block-entity visuals in LevelChunk.setBlockEntity (rendering); no block or fluid reads."),
+            new Patch("railways", "0.3.0-beta.2+neoforge-mc1.21.1", "railways-common.mixins.json", "com.railwayteam.railways.mixin.StructureMixin",
+                    "Adds the mod's data versions in StructureTemplate.save (saving a template to NBT); not part of structure starts."),
             new Patch("scalablelux", "0.3.0-alpha.0.8+1.21.1", "scalablelux.mixins.json", "ca.spottedleaf.starlight.mixin.common.chunk.LevelChunkMixin",
                     "Copies its light arrays into the chunk when it becomes full, and skips vanilla's sky-light-source update in "
                             + "setBlockState (it tracks sky light itself); block and fluid reads are unchanged."));

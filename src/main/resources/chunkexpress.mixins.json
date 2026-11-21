@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.chunkexpress.integration.mixin.hook",
+  "plugin": "com.chunkexpress.integration.mixin.ChunkExpressMixinPlugin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "probe.ChunkMapMixin",
+    "probe.IOWorkerMixin",
+    "probe.MinecraftServerMixin",
+    "probe.RegionFileMixin",
+    "probe.ChunkStepMixin",
+    "probe.ServerChunkCacheMixin",
+    "optimization.StageOffloadMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

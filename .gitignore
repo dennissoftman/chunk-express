@@ -1,0 +1,39 @@
+# Gradle
+.gradle/
+build/
+out/
+repo/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# Dev runs (worlds, logs, configs created by runClient/runServer/runGameTestServer)
+run/
+runs/
+# Third-party mod jars for compatibility and comparison runs (never committed)
+compat-mods/
+
+# Game logs and debug output from tools run in the project folder (worldDiff, stageHashDiff)
+logs/
+chunkexpress-debug/
+
+# Icon drafts (python art/make_icons.py); the chosen icon is art/icon.png
+art/icon-options/
+# Showcase GIFs (python art/make_showcase_gif.py), uploaded to the Modrinth gallery
+art/showcase/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python bytecode caches (art/ and scripts/ tools)
+__pycache__/
+*.pyc

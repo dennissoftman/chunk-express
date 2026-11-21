@@ -1,0 +1,329 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+// Minecraft 1.21.1 ships Java 21 to players.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+// In-game tests live in their own source set: they run in every dev run and in
+// runGameTestServer, but never ship in the mod jar.
+sourceSets {
+    gametest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    // The benchmark mod (chunkexpress_bench). Deliberately does NOT see Chunk Express' classes: it must
+    // run unchanged on vanilla, Chunk Express, Moonrise or C2ME. See docs/BENCHMARKS.md.
+    bench {
+    }
+}
+
+configurations {
+    gametestImplementation.extendsFrom implementation
+    gametestRuntimeOnly.extendsFrom runtimeOnly
+}
+
+// ---- Ice-road benchmark --------------------------------------------------------------------
+// ./gradlew runIceRoad            vanilla (plus any jars named with -Pwith=a.jar,b.jar)
+// ./gradlew runIceRoadChunkExpress  with Chunk Express
+// -Plength=5000 -Pseed=20261117 -PrenderDistance=12 -Pjvm="-Xmx6G ..."
+// Both use run/bench as the game folder, start from a new world every time (unless -Presume=true,
+// which reopens the existing ride world: see scripts/kill-test.sh), and append results to
+// run/bench/chunkexpress-bench/iceroad.{txt,csv}.
+def benchDir = file('run/bench')
+def benchProperties = { run ->
+    // The classpath comes from the bench source set, so Chunk Express is present only when listed in loadedMods.
+    run.sourceSet = sourceSets.bench
+    run.systemProperty 'chunkexpress.bench.iceroad', (project.findProperty('length') ?: '5000').toString()
+    run.systemProperty 'chunkexpress.bench.seed', (project.findProperty('seed') ?: '20261117').toString()
+    run.systemProperty 'chunkexpress.bench.renderDistance', (project.findProperty('renderDistance') ?: '12').toString()
+    run.systemProperty 'chunkexpress.bench.resume', (project.findProperty('resume') ?: 'false').toString()
+    // -Pcapture=<label>: save frames for the showcase GIF (art/make_showcase_gif.py); not a benchmark
+    run.systemProperty 'chunkexpress.bench.capture', (project.findProperty('capture') ?: '').toString()
+    // -Ppregen=<dimension>@<radius>: generate a square of chunks there and quit (stage-hash checks); not a benchmark
+    run.systemProperty 'chunkexpress.bench.pregen', (project.findProperty('pregen') ?: '').toString()
+    // -Ppreset=normal|large_biomes|amplified|single_biome_surface: world preset of the new world
+    run.systemProperty 'chunkexpress.bench.preset', (project.findProperty('preset') ?: 'normal').toString()
+    // -Psessions=N (with -Ppregen): create N worlds one after another in one game session
+    run.systemProperty 'chunkexpress.bench.sessions', (project.findProperty('sessions') ?: '1').toString()
+    run.jvmArguments.addAll((project.findProperty('jvm') ?: '').toString().split(' ').findAll { it })
+}
+
+// Extra mods for a comparison ride (e.g. C2ME jars) go in run/bench/mods. The folder is emptied on
+// every ride, also when no -Pwith is given, so nothing carries over by accident. (A Sync task would
+// be skipped as NO-SOURCE without -Pwith and leave the previous ride's jars in place.)
+def benchWith = (project.findProperty('with') ?: '').toString().split(',').findAll { it }.collect { file(it.trim()) }
+def syncBenchMods = tasks.register('syncBenchMods') {
+    outputs.upToDateWhen { false }
+    doLast {
+        def mods = new File(benchDir, 'mods')
+        mods.deleteDir()
+        mods.mkdirs()
+        benchWith.each { jar -> java.nio.file.Files.copy(jar.toPath(), new File(mods, jar.name).toPath()) }
+    }
+}
+
+// -Poptimizations=on|off pins every Chunk Express optimisation for an A/B comparison;
+// -PoffloadSurface=true|false and -PoffloadCarvers=true|false pin one (and win over -Poptimizations).
+// Without any of them the config file in run/bench/config is left as it is.
+def allOptimizations = project.findProperty('optimizations')?.toString()
+def pinnedOptimizations = [:]
+['offloadSurface', 'offloadCarvers'].each { key ->
+    def value = project.findProperty(key)?.toString() ?: (allOptimizations == null ? null : (allOptimizations == 'on').toString())
+    if (value != null) {
+        pinnedOptimizations[key] = value
+    }
+}
+def keepWorld = project.findProperty('keepWorld')?.toString()
+def resumeWorld = (project.findProperty('resume') ?: 'false').toString() == 'true'
+def prepareBench = tasks.register('prepareBench') {
+    dependsOn syncBenchMods
+    doLast {
+        if (!resumeWorld) {
+            new File(benchDir, 'saves/chunkexpress_iceroad').deleteDir()
+            // further worlds of a -Psessions run
+            new File(benchDir, 'saves').listFiles()?.findAll { it.name.startsWith('chunkexpress_iceroad_') }?.each { it.deleteDir() }
+        }
+        if (!pinnedOptimizations.isEmpty()) {
+            def config = new File(benchDir, 'config/chunkexpress-common.toml')
+            config.parentFile.mkdirs()
+            config.text = "[optimizations]\n" + pinnedOptimizations.collect { k, v -> "\t${k} = ${v}\n" }.join('')
+        }
+        def options = new File(benchDir, 'options.txt')
+        if (!options.exists()) {
+            // First launch in this folder: skip the accessibility and tutorial prompts.
+            options.parentFile.mkdirs()
+            options.text = ['onboardAccessibility:false', 'tutorialStep:none', 'joinedFirstServer:true',
+                            'skipMultiplayerWarning:true', 'pauseOnLostFocus:false'].join('\n') + '\n'
+        }
+    }
+}
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    // Declared before the runs, which refer to them by name.
+    mods {
+        chunkexpress {
+            sourceSet(sourceSets.main)
+            sourceSet(sourceSets.gametest)
+        }
+        chunkexpress_bench {
+            sourceSet(sourceSets.bench)
+        }
+    }
+
+    runs {
+        client {
+            client()
+            loadedMods = [mods.chunkexpress]
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            loadedMods = [mods.chunkexpress]
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        // Starts a dedicated server, runs every Chunk Express game test, and exits with a non-zero
+        // code on failure. This is the in-game half of the automated test suite.
+        gameTestServer {
+            type = 'gameTestServer'
+            loadedMods = [mods.chunkexpress]
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        // The game tests again, with the compatibility mods from compat-mods/ (Create, Farmer's
+        // Delight) loaded, in their own folder (run/compat). See docs/COMPATIBILITY.md.
+        gameTestServerCompat {
+            type = 'gameTestServer'
+            gameDirectory = file('run/compat')
+            loadedMods = [mods.chunkexpress]
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        iceRoad {
+            client()
+            gameDirectory = benchDir
+            loadedMods = [mods.chunkexpress_bench]
+            benchProperties(it)
+        }
+
+        iceRoadChunkExpress {
+            client()
+            gameDirectory = benchDir
+            loadedMods = [mods.chunkexpress, mods.chunkexpress_bench]
+            benchProperties(it)
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    addModdingDependenciesTo(sourceSets.gametest)
+    addModdingDependenciesTo(sourceSets.bench)
+
+    // The unit tests use fastutil and the Minecraft types that appear in method signatures, but
+    // never bootstrap the game. Anything that needs a running server is a game test instead.
+    addModdingDependenciesTo(sourceSets.test)
+}
+
+dependencies {
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
+    }
+}
+
+var replaceProperties = [
+        minecraft_version      : minecraft_version,
+        minecraft_version_range: minecraft_version_range,
+        neo_version            : neo_version,
+        neo_version_range      : neo_version_range,
+        loader_version_range   : loader_version_range,
+        mod_id                 : mod_id,
+        mod_name               : mod_name,
+        mod_license            : mod_license,
+        mod_version            : mod_version,
+        mod_authors            : mod_authors,
+]
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+var generateBenchMetadata = tasks.register('generateBenchMetadata', ProcessResources) {
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/bench/templates'
+    into 'build/generated/sources/benchMetadata'
+}
+sourceSets.bench.resources.srcDir generateBenchMetadata
+neoForge.ideSyncTask generateBenchMetadata
+
+tasks.matching { it.name in ['runIceRoad', 'runIceRoadChunkExpress'] }.configureEach {
+    dependsOn prepareBench
+    // -PkeepWorld=<name> copies the ride's world to run/bench/kept/<name> for ./gradlew worldDiff.
+    doLast {
+        if (keepWorld != null) {
+            def from = new File(benchDir, 'saves/chunkexpress_iceroad').toPath()
+            def to = new File(benchDir, "kept/${keepWorld}").toPath()
+            new File(to.toString()).deleteDir()
+            java.nio.file.Files.walk(from).withCloseable { paths ->
+                paths.forEach { p ->
+                    def target = to.resolve(from.relativize(p).toString())
+                    if (java.nio.file.Files.isDirectory(p)) {
+                        java.nio.file.Files.createDirectories(target)
+                    } else {
+                        java.nio.file.Files.copy(p, target)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Compares two stage-hash files (see com.chunkexpress.generation.StageHashes):
+// ./gradlew stageHashDiff -Pa=run/bench/chunkexpress-debug/off-minecraft_carvers.csv -Pb=...
+tasks.register('stageHashDiff', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.chunkexpress.tools.StageHashDiff'
+    args = [(project.findProperty('a') ?: '').toString(), (project.findProperty('b') ?: '').toString()]
+}
+
+// Checks every region file of a world offline: headers, every entry decodes, positions match.
+// ./gradlew regionCheck -Pworld=run/bench/saves/chunkexpress_iceroad   (exit code 1 on any problem)
+tasks.register('regionCheck', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.chunkexpress.tools.RegionCheck'
+    args = [(project.findProperty('world') ?: '').toString()]
+}
+
+// Compares the generated terrain of two worlds chunk by chunk (block states and biomes of every
+// chunk that is fully generated in both). ./gradlew worldDiff -Pa=run/bench/kept/x -Pb=run/bench/kept/y
+tasks.register('worldDiff', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.chunkexpress.tools.WorldDiff'
+    args = [(project.findProperty('a') ?: '').toString(), (project.findProperty('b') ?: '').toString(),
+            (project.findProperty('dimension') ?: 'region').toString()]
+}
+
+// Compatibility set: every jar in compat-mods/ (git-ignored; see docs/COMPATIBILITY.md for the exact
+// versions tested) except mods Chunk Express is declared incompatible with.
+def syncCompatMods = tasks.register('syncCompatMods', Sync) {
+    from('compat-mods') {
+        include '*.jar'
+        exclude 'c2me*', 'moonrise*'
+    }
+    into 'run/compat/mods'
+}
+tasks.matching { it.name == 'runGameTestServerCompat' }.configureEach { dependsOn syncCompatMods }
+
+// A standalone jar of the benchmark, to drop into any NeoForge 1.21.1 instance (for example one
+// set up with Moonrise or C2ME from a launcher). Start that game with -Dchunkexpress.bench.iceroad=5000.
+tasks.register('benchJar', Jar) {
+    archiveBaseName = 'chunkexpress-bench'
+    from sourceSets.bench.output
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll(['-Xlint:all,-processing,-serial', '-Werror'])
+}
+
+// The licence travels with every jar.
+tasks.withType(Jar).configureEach {
+    from('LICENSE') {
+        rename { 'LICENSE_chunkexpress' }
+    }
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes(
+                'Specification-Title': mod_name,
+                'Implementation-Title': mod_name,
+                'Implementation-Version': mod_version,
+        )
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

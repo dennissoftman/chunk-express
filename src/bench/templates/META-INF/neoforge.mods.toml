@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="chunkexpress_bench"
+version="${mod_version}"
+displayName="Chunk Express Bench"
+authors="${mod_authors}"
+description='''
+Development benchmark, not for play. Does nothing unless started with -Dchunkexpress.bench.iceroad=<blocks>.
+Independent of Chunk Express, so the same ride runs on vanilla, Chunk Express, Moonrise or C2ME.
+'''
+
+[[dependencies.chunkexpress_bench]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neo_version_range}"
+    ordering="NONE"
+    side="CLIENT"
+
+[[dependencies.chunkexpress_bench]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="CLIENT"

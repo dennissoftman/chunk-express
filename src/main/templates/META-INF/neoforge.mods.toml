@@ -1,0 +1,59 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+# Pixel art: shown sharp, not smoothed
+logoFile="chunkexpress.png"
+logoBlur=false
+description='''
+A chunk engine for faster world generation and loading, with world integrity as the first requirement.
+Measures the vanilla chunk system and reports silent data loss; optimisations fall back to vanilla
+on their own when they cannot prove they are safe. The world format is unchanged.
+'''
+
+# Chunk Express is server-side. It registers no network payloads, so NeoForge's channel
+# negotiation lets clients without it join a server that runs it.
+
+[[mixins]]
+config="${mod_id}.mixins.json"
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="${neo_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
+
+# Other chunk-system mods. NeoForge refuses to start with both installed and shows the reason.
+# No versionRange: FML then matches every version. Keep in sync with KnownMods (a unit test checks).
+[[dependencies.${mod_id}]]
+    modId="moonrise"
+    type="incompatible"
+    reason="Moonrise replaces the Minecraft chunk system, which Chunk Express is built to manage. Running both is not supported; remove one of them."
+    side="BOTH"
+
+# Official C2ME for NeoForge: the main jar declares "c2me" and bundles its modules, all of
+# which depend on "c2me_base". Blocking both also covers modules installed on their own.
+[[dependencies.${mod_id}]]
+    modId="c2me"
+    type="incompatible"
+    reason="C2ME replaces the Minecraft chunk loading, saving and generation scheduling, which Chunk Express is built to manage. Running both is not supported; remove one of them."
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="c2me_base"
+    type="incompatible"
+    reason="C2ME replaces the Minecraft chunk loading, saving and generation scheduling, which Chunk Express is built to manage. Running both is not supported; remove one of them."
+    side="BOTH"

@@ -14,6 +14,7 @@ public final class ChunkExpressConfig {
     private static final ModConfigSpec.IntValue SLOW_WRITE_WARN_MILLIS;
     private static final ModConfigSpec.BooleanValue OFFLOAD_SURFACE;
     private static final ModConfigSpec.BooleanValue OFFLOAD_CARVERS;
+    private static final ModConfigSpec.BooleanValue OFFLOAD_STRUCTURE_STARTS;
 
     static {
         Settings defaults = Settings.defaults();
@@ -52,6 +53,12 @@ public final class ChunkExpressConfig {
                         "Same conditions as offloadSurface, and additionally no mod-added carver types.",
                         "false = exactly vanilla.")
                 .define("offloadCarvers", defaults.offloadCarvers());
+        OFFLOAD_STRUCTURE_STARTS = b
+                .comment("Run the 'structure_starts' generation stage (where villages, strongholds and other structures",
+                        "are planned) on Minecraft's worker threads too. Applies only to vanilla terrain generators,",
+                        "with no mod-added structure, piece, pool-element, processor or pool-alias types and no other",
+                        "mod patching the structure code. false = exactly vanilla.")
+                .define("offloadStructureStarts", defaults.offloadStructureStarts());
         b.pop();
 
         SPEC = b.build();
@@ -66,6 +73,6 @@ public final class ChunkExpressConfig {
             return Settings.defaults();
         }
         return new Settings(INSTRUMENTATION.get(), LOG_SESSION_SUMMARY.get(), SLOW_WRITE_WARN_MILLIS.get(),
-                OFFLOAD_SURFACE.get(), OFFLOAD_CARVERS.get());
+                OFFLOAD_SURFACE.get(), OFFLOAD_CARVERS.get(), OFFLOAD_STRUCTURE_STARTS.get());
     }
 }

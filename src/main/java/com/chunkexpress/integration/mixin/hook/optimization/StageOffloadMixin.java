@@ -38,4 +38,11 @@ abstract class StageOffloadMixin {
             Operation<CompletableFuture<ChunkAccess>> original) {
         return StageOffload.generate(StageOffload.Stage.CARVERS, context, step, cache, chunk, original);
     }
+
+    @WrapMethod(method = "generateStructureStarts")
+    private static CompletableFuture<ChunkAccess> chunkexpress$generateStructureStarts(
+            WorldGenContext context, ChunkStep step, StaticCache2D<GenerationChunkHolder> cache, ChunkAccess chunk,
+            Operation<CompletableFuture<ChunkAccess>> original) {
+        return StageOffload.generate(StageOffload.Stage.STRUCTURE_STARTS, context, step, cache, chunk, original);
+    }
 }

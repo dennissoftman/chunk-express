@@ -37,13 +37,17 @@ public final class OptimizationGameTests {
         helper.assertTrue(nether != null, "no nether on the test server");
         long surfaceBefore = StageOffload.offloaded(Stage.SURFACE);
         long carversBefore = StageOffload.offloaded(Stage.CARVERS);
+        long structureStartsBefore = StageOffload.offloaded(Stage.STRUCTURE_STARTS);
         // The test world persists between runs: pick a position that has (almost certainly) never been generated.
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int x = 20_000 + random.nextInt(100_000);
         int z = -120_000 + random.nextInt(100_000);
         ChunkAccess chunk = nether.getChunk(x, z, ChunkStatus.FULL, true);
         helper.assertTrue(chunk != null && chunk.getPersistedStatus() == ChunkStatus.FULL, "nether chunk did not generate");
-        Map<Stage, Long> before = Map.of(Stage.SURFACE, surfaceBefore, Stage.CARVERS, carversBefore);
+        Map<Stage, Long> before = new java.util.EnumMap<>(Stage.class);
+        before.put(Stage.SURFACE, surfaceBefore);
+        before.put(Stage.CARVERS, carversBefore);
+        before.put(Stage.STRUCTURE_STARTS, structureStartsBefore);
 
         for (Stage stage : Stage.values()) {
             Map<ResourceKey<Level>, StageOffloadPolicy.Decision> decisions = StageOffload.decisions(stage);

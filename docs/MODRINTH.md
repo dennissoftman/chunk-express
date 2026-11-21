@@ -10,11 +10,10 @@ docs/BENCHMARKS.md; never publish a number that is not there.
 | URL slug / project ID | `chunk-express` (free as of 2026-11-20; `chunkexpress`, the mod id, is free too) |
 | Summary (≤ 256 chars) | Faster chunk generation with terrain identical to vanilla: runs the safe parts of world generation on your spare CPU cores. |
 | Categories | Optimization (primary), Utility, Worldgen |
-| Client side | Optional (needed only in singleplayer; players joining a server do not need it) |
-| Server side | Required |
+| Environment | Server-side, works in singleplayer (install it in the game for singleplayer; a server needs it, joining players don't) |
 | Loaders / versions | NeoForge, Minecraft 1.21.1 (NeoForge 21.1.265 or newer in 21.1) |
 | License | GPL-3.0-only |
-| Source / issues | add once the repository is public (GPL-3.0 requires the source to be available) |
+| Source / issues | https://github.com/dennissoftman/chunk-express (issues: /issues) |
 | Release channel | Beta once docs/RELEASE_CRITERIA.md B1–B18 pass; Release after R1–R6 |
 
 Summary length: 123 characters (Modrinth's card shows about two lines; keep it short, plain text, without the project name).

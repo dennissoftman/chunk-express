@@ -76,7 +76,7 @@ class RuntimeTest {
 
     @Test
     void disabledInstrumentationHidesTheRuntimeFromHooks() {
-        ChunkExpressRuntime rt = runtime(new Settings(false, true, 0, false, false), Map.of());
+        ChunkExpressRuntime rt = runtime(new Settings(false, true, 0, false, false, false), Map.of());
         ChunkExpressRuntime.install(rt);
         assertSame(rt, ChunkExpressRuntime.current());
         assertNull(ChunkExpressRuntime.active());
@@ -113,7 +113,7 @@ class RuntimeTest {
 
     @Test
     void statusReportWarnsWhenInstrumentationIsOff() {
-        ChunkExpressRuntime rt = runtime(new Settings(false, true, 0, false, false), Map.of());
+        ChunkExpressRuntime rt = runtime(new Settings(false, true, 0, false, false, false), Map.of());
         List<String> lines = StatusReport.render(rt, "0.1.0", Map.of());
         assertTrue(lines.get(1).startsWith("Instrumentation is disabled"));
     }

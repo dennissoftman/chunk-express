@@ -223,7 +223,7 @@ stages stay off the lane for vanilla-generated dimensions.
 
 ## O3 - Structure starts off the worldgen lane (`offloadStructureStarts`)
 
-**Status:** designed; implementation and verification in progress.
+**Status:** implemented for 0.2.0 (default on, gated); verification below.
 
 ### Evidence
 
@@ -258,3 +258,81 @@ processor or pool-alias types; no other mod's mixins on structure-generation cla
 
 Structure starts produce structure data, not blocks, so the stage hash covers each start's structure
 id, bounding box and pieces (`structure_starts_out`).
+
+### Implementation
+
+`StageOffload.Stage.STRUCTURE_STARTS`, wrapped like O1/O2 (`@WrapMethod` on
+`ChunkStatusTasks.generateStructureStarts`), with the same warm-up and fault handling.
+
+- Watched classes (`StructureClasses`): all 125 top-level classes of 1.21.1's
+  `net.minecraft.world.level.levelgen.structure` packages (nested classes included by the gate),
+  plus `ChunkStatusTasks`, `ChunkGenerator`, `ChunkGeneratorStructureState`,
+  `NoiseBasedChunkGenerator` and `level.StructureManager`.
+- Types, as used: placement and structure types of the dimension's structure sets, every `type`
+  inside those structures (encoded as JSON: height providers, pool aliases, ...), and the
+  `element_type` of every element of every template pool, read through `getShuffledTemplates` so
+  that entries other mods add to pools are included. Piece types are created by code, so any
+  mod-added one counts. Anything that cannot be read counts as unknown. Processor types are not counted: vanilla runs processors
+  only in `StructureTemplate.processBlockInfos`, i.e. when a template is placed into the world
+  (features stage), never during structure starts.
+- Output hash `structure_starts_out`: per chunk, every start's structure id and bounding box, and per
+  piece its type, bounding box, depth, orientation and, for jigsaw pieces, the pool element.
+
+### Reviewed patches: Lithostitched 1.8.1 on the structure code
+
+27 of its mixins target watched classes. None writes a static field. By what runs during structure
+starts:
+
+| Mixin(s) | Runs during structure starts? | Finding |
+|---|---|---|
+| `JigsawStructureMixin` (`findGenerationPoint`) | yes | routes to `AlternateJigsawStructure.generate` when its alternate config is used; only static constants (codec, type) |
+| `StructureTemplatePoolMixin` | yes (template choice) | gives each pool a `LithostitchedTemplates`, filled by `compileRawTemplates` from a world-generation modifier at server start. `shuffle(random)` maps the entries through `WeightedEntry::copy`, then randomises and sorts only the copies: the shared list is never modified |
+| `PoolAliasLookupMixin` (`create`) | yes | no field writes, no helper calls |
+| `template.NetherFossil/RuinedPortal/ShipwreckStructureMixin` (`findGenerationPoint`, `generatePieces`) | yes | pick a template id via `TemplateLists.getRandom(registryAccess, key, random)`: registry read, random from the caller; `TemplateLists` holds only static constants |
+| `template.mansion.*` (`createMansion`, room pickers, `makeLocation`) | yes | write `registries` into the per-mansion `MansionPiecePlacer` and its room collections, which vanilla creates afresh for each mansion |
+| `*PieceMixin.makeSettings` (End city, igloo, nether fossil, ocean ruin, ruined portal, shipwreck, mansion) | yes (piece constructors) | build the piece's own `StructurePlaceSettings` with `UnboundReferenceProcessor.of(...)` (a new object) |
+| Accessors (`ChunkGenerator`, `JigsawStructure`, `ListPoolElement`, `SinglePoolElement`, `StructureProcessorList`, `StructureSet`, `StructureTemplatePool`) | getters yes; setters no | setters are called only by Lithostitched's world-generation modifiers and `BiomeInjectorManager`, at server start; `AlternateJigsawStructure.setPoolAliases` is one of those (via `SetPoolAliasesModifier`) |
+| type `lithostitched:internal/random_entries` (pool-alias binding, used by the overworld) | yes | immutable record; picks pools with the caller's random source (reviewed as a type, `ReviewedPatches.TYPES`) |
+| `StructurePieceMixin`, `StructureStartMixin`, `processor.*` (`postProcess`, `placeInChunk`, `placeBlock`, `createChest`, `afterPlace`, ...) | no: placement (features stage) | not moved by O3; `StructurePieceMixin` writes only the piece's own reference position |
+
+### A vanilla race found by the verification
+
+The first O3 hash matrix (2026-11-21) crashed once in seven runs, with Large Biomes: a
+`NullPointerException` in `FrontAndTop.fromFrontAndTop` ("top is null") while rotating a jigsaw
+block during structure starts. Cause: vanilla's `OctahedralGroup.rotate(Direction)` builds its
+direction table lazily and assigns the empty `EnumMap` to the field *before* filling it, so a second
+thread can read a missing entry. Vanilla can hit this too (structure starts of different dimensions
+run at the same time), but only on first use; O3 runs many structure starts in parallel right at
+world start, which made it likely.
+
+Fix (`StageOffload.prepareVanillaCaches`): before the first chunk of each server is offloaded, every
+`OctahedralGroup`'s table is filled on one thread, then published with the stage decisions. Vanilla
+code is unchanged and from then on only reads the tables.
+
+A search of the code the moved stages reach for the same pattern (a field checked against null or a
+sentinel, then assigned) found no other case: the structure packages have none; the template
+palette cache and `StructureTemplateManager`'s repository are concurrent maps (NeoForge, MC-271899);
+`StructureCheck`'s maps are written only on the server thread (`onStructureStartsAvailable` queues
+the update with `server.execute`); `Transformation`'s caches are rendering-only.
+
+### O3 results (2026-11-21)
+
+Stage-hash pairs, all optimisations off vs on (`-Ppregen`, `structure_starts_out`, `surface_out`,
+`carvers_out`):
+
+| World | Structure starts (shared chunks) | Surface / carvers |
+|---|---|---|
+| seed 20261117, overworld + Nether + End | 0 of 9,127 differ | 0 of 3,547 |
+| seed 1, overworld + Nether + End | 0 of 9,228 | 0 of 3,612 |
+| seed -4172144997902289642, overworld + Nether + End | 0 of 9,177 | 0 of 3,579 |
+| Amplified | 0 of 4,709 | 0 of 1,865 |
+| Large Biomes (after the `OctahedralGroup` fix) | identical | 0 of 1,930 |
+| Terralith + Lithostitched 1.8.1, overworld + Nether | 0 of 6,622-6,672 (three runs: off, off, on) | 0 of 2,554 |
+
+Stress: 8 runs with O3 on (Large Biomes and normal worlds, eight seeds), 0 crash reports. Game tests
+12/12 alone and with every compatibility mod; fallback and fault scripts pass.
+
+One apparent difference with Terralith (chunk 0,22) also differed between two runs with O3 *off*:
+the hash used the pool element's `toString()`, which for some elements contains identity hash
+codes. Pool elements are now hashed by their codec encoding; with that, all three runs agree.
+

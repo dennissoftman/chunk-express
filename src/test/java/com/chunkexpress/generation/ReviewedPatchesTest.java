@@ -35,6 +35,15 @@ class ReviewedPatchesTest {
     }
 
     @Test
+    void reviewedTypesPassOnlyForTheReviewedVersion() {
+        String alias = "lithostitched:internal/random_entries";
+        ReviewedPatches.Split ok = ReviewedPatches.splitTypes(List.of(alias, "othermod:thing"), Map.of("lithostitched", "1.8.1"));
+        assertEquals(List.of(alias), ok.reviewed());
+        assertEquals(List.of("othermod:thing"), ok.unreviewed());
+        assertEquals(1, ReviewedPatches.splitTypes(List.of(alias), Map.of("lithostitched", "1.9.0")).unreviewed().size());
+    }
+
+    @Test
     void unknownMixinsStayUnreviewed() {
         ReviewedPatches.Split s = ReviewedPatches.split(List.of(BANDS, OTHER), Map.of("lithostitched", "1.8.1"));
         assertEquals(List.of(OTHER), s.unreviewed());

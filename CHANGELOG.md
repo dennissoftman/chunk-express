@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0 - unreleased
+
+### Faster generation
+
+- **`offloadStructureStarts`** (default on): the *structure starts* stage - where villages,
+  strongholds and other structures are planned - runs on Minecraft's worker threads too, with
+  stricter checks than surface and carvers. Checked identical to vanilla across seeds, dimensions,
+  Large Biomes, Amplified and Terralith.
+- Works with Terralith/Lithostitched 1.8.1 for all three stages: its patches to the structure code
+  were reviewed.
+
+### Fixes
+
+- A vanilla race found while testing: the table vanilla uses to rotate jigsaw blocks is filled
+  lazily without thread safety (it could crash the server with a NullPointerException when two
+  structures generated at once). Chunk Express now fills it before any chunk is generated in
+  parallel.
+- The structure-starts checks look only at types a dimension's structures and template pools
+  actually use, so libraries that register unused types don't switch it off.
+
 ## 0.1.0 - 2026-11-21 (first public release)
 
 Minecraft 1.21.1, NeoForge 21.1.265 or newer within 21.1, Java 21. Server-side; players joining a

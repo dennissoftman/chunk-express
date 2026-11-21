@@ -89,7 +89,15 @@ public final class StageOffload {
         // rule (both stages run surface rules), and for carvers the carver types of its biomes. The
         // registries listed here (none at present) would be checked whole: any mod-added entry counts.
         SURFACE("surface", "offloadSurface", "wgen_surface", Settings::offloadSurface, SURFACE_CLASSES, List.of()),
-        CARVERS("carvers", "offloadCarvers", "wgen_carvers", Settings::offloadCarvers, CARVER_CLASSES, List.of());
+        CARVERS("carvers", "offloadCarvers", "wgen_carvers", Settings::offloadCarvers, CARVER_CLASSES, List.of()),
+        // O3. Types are checked as used: every type inside the structures the dimension can place
+        // (structure, height providers, pool aliases, ...), its placement types, and the element types
+        // of every template pool (jigsaw assembly can reach any pool). Piece types are created by code,
+        // not data, so any mod-added one counts. Processor types are not counted: vanilla runs
+        // processors only when a template is placed (features stage).
+        STRUCTURE_STARTS("structure_starts", "offloadStructureStarts", "wgen_structure_starts",
+                Settings::offloadStructureStarts, StructureClasses.ALL,
+                List.of(BuiltInRegistries.STRUCTURE_PIECE));
 
         final String name;
         final String configKey;
@@ -135,7 +143,7 @@ public final class StageOffload {
         if (!offload || !stage.warmed) {
             stage.inline.increment();
             CompletableFuture<ChunkAccess> result = original.call(context, step, cache, chunk);
-            hashOutput(stage, chunk);
+            hashOutput(stage, context, chunk);
             if (offload) {
                 stage.warmed = true; // the stage's code has now run once, to completion, on this thread
             }
@@ -150,15 +158,64 @@ public final class StageOffload {
                 throw new IllegalStateException("Chunk Express fault injection (chunkexpress.debug.failStage=" + FAIL_STAGE + ")");
             }
             ChunkAccess done = original.call(context, step, cache, chunk).join();
-            hashOutput(stage, chunk);
+            hashOutput(stage, context, chunk);
             return done;
         }), Util.backgroundExecutor());
     }
 
-    private static void hashOutput(Stage stage, ChunkAccess chunk) {
+    private static void hashOutput(Stage stage, WorldGenContext context, ChunkAccess chunk) {
         if (StageHashes.ENABLED && StageHashes.wanted(stage.outputHashKey)) {
-            ProbeHooks.hashChunk(stage.outputHashKey, chunk);
+            if (stage == Stage.STRUCTURE_STARTS) {
+                hashStructureStarts(stage.outputHashKey, context, chunk); // produces structure data, not blocks
+            } else {
+                ProbeHooks.hashChunk(stage.outputHashKey, chunk);
+            }
         }
+    }
+
+    /**
+     * Hash of a chunk's structure starts: each start's structure id and bounding box, and each piece's
+     * type, bounding box, depth, orientation and (jigsaw pieces) pool element, in a fixed order.
+     */
+    private static void hashStructureStarts(String key, WorldGenContext context, ChunkAccess chunk) {
+        var registry = context.level().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.STRUCTURE);
+        // Pool elements are hashed by their codec encoding (registry ids), not toString(): some elements
+        // print objects with identity hash codes, which differ from run to run.
+        var ops = net.minecraft.resources.RegistryOps.create(JsonOps.INSTANCE, context.level().registryAccess());
+        List<Map.Entry<String, net.minecraft.world.level.levelgen.structure.StructureStart>> starts = new ArrayList<>();
+        chunk.getAllStarts().forEach((structure, start) -> starts.add(Map.entry(String.valueOf(registry.getKey(structure)), start)));
+        starts.sort(Map.Entry.comparingByKey());
+        long hash = StageHashes.SEED;
+        for (var entry : starts) {
+            hash = mixText(hash, entry.getKey());
+            hash = mixBox(hash, entry.getValue().getBoundingBox());
+            for (var piece : entry.getValue().getPieces()) {
+                hash = mixText(hash, String.valueOf(BuiltInRegistries.STRUCTURE_PIECE.getKey(piece.getType())));
+                hash = mixBox(hash, piece.getBoundingBox());
+                hash = StageHashes.mix(hash, piece.getGenDepth());
+                hash = StageHashes.mix(hash, piece.getOrientation() == null ? -1 : piece.getOrientation().ordinal());
+                if (piece instanceof net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece pool) {
+                    hash = mixText(hash, net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement.CODEC
+                            .encodeStart(ops, pool.getElement()).result().map(Object::toString)
+                            .orElse("unencodable " + pool.getElement().getClass().getName()));
+                }
+            }
+        }
+        StageHashes.record(key, chunk.getPos().x, chunk.getPos().z, hash);
+    }
+
+    private static long mixText(long hash, String text) {
+        for (int i = 0; i < text.length(); i++) {
+            hash = StageHashes.mix(hash, text.charAt(i));
+        }
+        return StageHashes.mix(hash, text.length());
+    }
+
+    private static long mixBox(long hash, net.minecraft.world.level.levelgen.structure.BoundingBox box) {
+        for (int v : new int[]{box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(), box.maxZ()}) {
+            hash = StageHashes.mix(hash, v);
+        }
+        return hash;
     }
 
     /** Per-dimension decisions for one stage on the current server, for tests and status output. */
@@ -199,6 +256,7 @@ public final class StageOffload {
                         s.inline.reset();
                         s.warmed = false;
                     }
+                    prepareVanillaCaches();
                     decidedFor = rt;
                 }
             }
@@ -210,24 +268,49 @@ public final class StageOffload {
             ChunkGenerator generator = context.generator();
             boolean vanillaGenerator = generator.getClass() == NoiseBasedChunkGenerator.class;
             List<String> types = new ArrayList<>(customTypes(stage.registries));
-            if (vanillaGenerator) {
+            if (vanillaGenerator && stage == Stage.STRUCTURE_STARTS) {
+                types.addAll(structureTypes(context));
+            } else if (vanillaGenerator) {
                 types.addAll(surfaceRuleTypes((NoiseBasedChunkGenerator) generator));
                 if (stage == Stage.CARVERS) {
                     types.addAll(carverTypes(generator));
                 }
             }
-            ReviewedPatches.Split mixins = ReviewedPatches.split(foreignMixins(stage.classes), installedModVersions());
+            Map<String, String> versions = installedModVersions();
+            ReviewedPatches.Split typeSplit = ReviewedPatches.splitTypes(List.copyOf(new java.util.TreeSet<>(types)), versions);
+            ReviewedPatches.Split mixins = ReviewedPatches.split(foreignMixins(stage.classes), versions);
+            List<String> reviewed = new ArrayList<>(mixins.reviewed());
+            typeSplit.reviewed().forEach(t -> reviewed.add("type " + t));
             StageOffloadPolicy.Decision d = StageOffloadPolicy.decide(stage.name, stage.configKey,
                     stage.enabled.test(rt.settings()),
                     generator.getClass().getName(),
                     vanillaGenerator,
-                    types,
+                    typeSplit.unreviewed(),
                     mixins.unreviewed(),
-                    mixins.reviewed());
+                    reviewed);
             Logs.LOG.info("Chunk Express: {} stage for {} runs {}: {}", stage.name, dimension.location(),
                     d.offload() ? "on worker threads" : "on the worldgen lane (vanilla)", d.reason());
             return d;
         });
+    }
+
+    /**
+     * Fills vanilla caches that are built lazily without any thread safety and that the moved stages
+     * reach, before any chunk of this server is offloaded. Called once per server, before decisions
+     * are published (the volatile {@code decidedFor} write), so every worker task submitted later sees
+     * them complete.
+     *
+     * <p>{@code OctahedralGroup.rotate(Direction)} assigns its empty direction map to the field before
+     * filling it: a second thread rotating a jigsaw block at that moment reads a missing entry and
+     * crashes (NullPointerException in FrontAndTop, seen once in O3's verification). Filling every
+     * group's map here leaves vanilla only ever reading it.
+     */
+    static void prepareVanillaCaches() {
+        for (com.mojang.math.OctahedralGroup group : com.mojang.math.OctahedralGroup.values()) {
+            for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+                group.rotate(direction);
+            }
+        }
     }
 
     /**
@@ -268,6 +351,49 @@ public final class StageOffload {
             custom.add("carvers that could not be read (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
         }
         return List.copyOf(custom);
+    }
+
+    /**
+     * Mod-added types structure starts would run for this dimension: placement and structure types of
+     * its structure sets, every "type" inside those structures (encoded as JSON), and the element
+     * types of every template pool, read through {@code getShuffledTemplates} so that entries other
+     * mods add to pools are included. Anything that cannot be read counts as unknown.
+     */
+    static List<String> structureTypes(WorldGenContext context) {
+        java.util.Set<String> custom = new java.util.TreeSet<>();
+        var access = context.level().registryAccess();
+        var ops = net.minecraft.resources.RegistryOps.create(JsonOps.INSTANCE, access);
+        try {
+            for (var set : context.level().getChunkSource().getGeneratorState().possibleStructureSets()) {
+                addIfModded(custom, BuiltInRegistries.STRUCTURE_PLACEMENT.getKey(set.value().placement().type()), "placement");
+                for (var entry : set.value().structures()) {
+                    var structure = entry.structure().value();
+                    addIfModded(custom, BuiltInRegistries.STRUCTURE_TYPE.getKey(structure.type()), "structure");
+                    JsonElement json = net.minecraft.world.level.levelgen.structure.Structure.DIRECT_CODEC.encodeStart(ops, structure).getOrThrow();
+                    custom.addAll(RuleTypes.nonVanilla(RuleTypes.collect(json)));
+                }
+            }
+            net.minecraft.util.RandomSource fixed = net.minecraft.util.RandomSource.create(0L);
+            for (var pool : access.registryOrThrow(net.minecraft.core.registries.Registries.TEMPLATE_POOL)) {
+                for (var element : pool.getShuffledTemplates(fixed)) {
+                    addIfModded(custom, BuiltInRegistries.STRUCTURE_POOL_ELEMENT.getKey(element.getType()), "pool element");
+                    JsonElement json = net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement.CODEC
+                            .encodeStart(ops, element).getOrThrow();
+                    custom.addAll(RuleTypes.nonVanilla(RuleTypes.collect(json, java.util.Set.of("element_type"))));
+                }
+            }
+        } catch (RuntimeException e) {
+            custom.add("structure sets that could not be read (" + e.getClass().getSimpleName() + ": " + e.getMessage() + ")");
+        }
+        return List.copyOf(custom);
+    }
+
+    private static void addIfModded(java.util.Set<String> custom, ResourceLocation id, String what) {
+        if (id == null) {
+            custom.add("an unregistered " + what + " type");
+        } else if (!id.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)) {
+            custom.add(id.toString());
+        }
     }
 
     private static Map<String, String> installedModVersions() {

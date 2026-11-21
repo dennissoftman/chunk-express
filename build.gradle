@@ -77,11 +77,11 @@ def syncBenchMods = tasks.register('syncBenchMods') {
 }
 
 // -Poptimizations=on|off pins every Chunk Express optimisation for an A/B comparison;
-// -PoffloadSurface=true|false and -PoffloadCarvers=true|false pin one (and win over -Poptimizations).
+// -PoffloadSurface, -PoffloadCarvers and -PoffloadStructureStarts=true|false pin one (and win over -Poptimizations).
 // Without any of them the config file in run/bench/config is left as it is.
 def allOptimizations = project.findProperty('optimizations')?.toString()
 def pinnedOptimizations = [:]
-['offloadSurface', 'offloadCarvers'].each { key ->
+['offloadSurface', 'offloadCarvers', 'offloadStructureStarts'].each { key ->
     def value = project.findProperty(key)?.toString() ?: (allOptimizations == null ? null : (allOptimizations == 'on').toString())
     if (value != null) {
         pinnedOptimizations[key] = value

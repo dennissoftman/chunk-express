@@ -21,8 +21,13 @@ public final class RuleTypes {
 
     /** Every "type" value anywhere in the tree, sorted. */
     public static Set<String> collect(JsonElement tree) {
+        return collect(tree, Set.of("type"));
+    }
+
+    /** Every value of the given keys (e.g. "type", "element_type") anywhere in the tree, sorted. */
+    public static Set<String> collect(JsonElement tree, Set<String> keys) {
         Set<String> types = new TreeSet<>();
-        walk(tree, types);
+        walk(tree, types, keys);
         return types;
     }
 
@@ -38,20 +43,20 @@ public final class RuleTypes {
         return custom;
     }
 
-    private static void walk(JsonElement element, Set<String> types) {
+    private static void walk(JsonElement element, Set<String> types, Set<String> keys) {
         if (element == null || element.isJsonNull() || element.isJsonPrimitive()) {
             return;
         }
         if (element.isJsonArray()) {
-            element.getAsJsonArray().forEach(e -> walk(e, types));
+            element.getAsJsonArray().forEach(e -> walk(e, types, keys));
             return;
         }
         JsonObject object = element.getAsJsonObject();
         for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-            if (entry.getKey().equals("type") && entry.getValue() instanceof JsonPrimitive p && p.isString()) {
+            if (keys.contains(entry.getKey()) && entry.getValue() instanceof JsonPrimitive p && p.isString()) {
                 types.add(p.getAsString());
             } else {
-                walk(entry.getValue(), types);
+                walk(entry.getValue(), types, keys);
             }
         }
     }

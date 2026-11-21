@@ -3,6 +3,7 @@
     python scripts/modrinth.py create    # create the project as a private draft (with the icon)
     python scripts/modrinth.py update    # push the current description and summary to the draft
     python scripts/modrinth.py gallery   # upload the showcase GIF as the featured gallery image
+    python scripts/modrinth.py version 0.1.0 <jar>   # upload a version (Beta) with its CHANGELOG.md section
     python scripts/modrinth.py show      # read the project back
 
 The token is read from MODRINTH_TOKEN or from modrinth.token in ~/.gradle/gradle.properties. It is
@@ -100,8 +101,8 @@ def create():
         "project_type": "mod",
         "is_draft": True,
         "initial_versions": [],
-        "issues_url": None,
-        "source_url": None,
+        "issues_url": "https://github.com/dennissoftman/chunk-express/issues",
+        "source_url": "https://github.com/dennissoftman/chunk-express",
         "wiki_url": None,
         "discord_url": None,
         "donation_urls": [],
@@ -143,6 +144,42 @@ def gallery():
         print("url:", item.get("title"), item["url"])
 
 
+def version():
+    """Upload a jar as a new Beta version of the project. Uploading to a draft publishes nothing."""
+    if len(sys.argv) != 4:
+        sys.exit("usage: modrinth.py version <version> <jar>")
+    number, jar = sys.argv[2], Path(sys.argv[3])
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from changelog_section import section
+    notes = section(number, (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"))
+    if not notes:
+        sys.exit(f"CHANGELOG.md has no section for {number}")
+    status, p = request("GET", f"/project/{SLUG}")
+    if status >= 300:
+        sys.exit(f"project lookup failed: {status} {p}")
+    status, existing = request("GET", f"/project/{SLUG}/version")
+    if status < 300 and any(v.get("version_number") == number for v in existing):
+        sys.exit(f"version {number} already exists on Modrinth")
+    data = {
+        "project_id": p["id"],
+        "name": f"Chunk Express {number}",
+        "version_number": number,
+        "changelog": notes,
+        "dependencies": [],
+        "game_versions": ["1.21.1"],
+        "version_type": "beta",
+        "loaders": ["neoforge"],
+        "featured": True,
+        "file_parts": ["jar"],
+        "primary_file": "jar",
+    }
+    payload, ctype = multipart({"data": json.dumps(data)}, {"jar": (jar.name, jar.read_bytes(), "application/java-archive")})
+    status, result = request("POST", "/version", payload, ctype)
+    print("version:", status, "" if status < 300 else result)
+    if status < 300:
+        print("  id:", result.get("id"), "| files:", [f.get("filename") for f in result.get("files", [])])
+
+
 def show():
     status, p = request("GET", f"/project/{SLUG}")
     if status >= 300:
@@ -156,4 +193,4 @@ def show():
 
 
 if __name__ == "__main__":
-    {"create": create, "update": update, "gallery": gallery, "show": show}[sys.argv[1] if len(sys.argv) > 1 else "show"]()
+    {"create": create, "update": update, "gallery": gallery, "version": version, "show": show}[sys.argv[1] if len(sys.argv) > 1 else "show"]()

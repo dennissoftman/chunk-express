@@ -48,6 +48,77 @@ public final class ReviewedPatches {
             lithostitched("NoiseBasedChunkGeneratorAccessor",
                     "Setter for NoiseBasedChunkGenerator.settings, called only by RereferenceNoiseSettingsModifier.apply(RegistryAccess) "
                             + "while worldgen modifiers are applied at server start, before any chunk generates."),
+            // Structure code (O3), reviewed 2026-11-21; docs/OPTIMIZATIONS.md has the details.
+            lithostitched("ChunkGeneratorAccessor",
+                    "Getters, and setters called only by BiomeInjectorManager and modifiers at server start, before any chunk generates."),
+            lithostitched("JigsawStructureAccessor",
+                    "Pool-alias getter, and a setter called only by Lithostitched's world-generation modifiers, applied at server start before any chunk generates."),
+            lithostitched("ListPoolElementAccessor",
+                    "Getters only."),
+            lithostitched("SinglePoolElementAccessor",
+                    "Getters, and a processors setter called only by Lithostitched's world-generation modifiers, applied at server start before any chunk generates."),
+            lithostitched("StructureProcessorListAccessor",
+                    "Processors setter called only by Lithostitched's world-generation modifiers, applied at server start before any chunk generates."),
+            lithostitched("StructureSetAccessor",
+                    "Structures setter called only by Lithostitched's world-generation modifiers, applied at server start before any chunk generates."),
+            lithostitched("StructureTemplatePoolAccessor",
+                    "Getters, and template-list setters called only by AddTemplatePoolElementsModifier at server start."),
+            lithostitched("JigsawStructureMixin",
+                    "findGenerationPoint (runs during structure starts): routes to AlternateJigsawStructure.generate when its alternate config is used; only static constants."),
+            lithostitched("StructureTemplatePoolMixin",
+                    "Template choice (runs during structure starts): each pool's LithostitchedTemplates is filled at server start; shuffle(random) copies the entries (WeightedEntry::copy) and sorts only the copies."),
+            lithostitched("PoolAliasLookupMixin",
+                    "create (runs during structure starts): no field writes, no helper calls."),
+            lithostitched("template.NetherFossilStructureMixin",
+                    "findGenerationPoint (runs during structure starts): picks a template id with TemplateLists.getRandom(registryAccess, key, random); registry read, caller's random, static constants only."),
+            lithostitched("template.RuinedPortalStructureMixin",
+                    "findGenerationPoint (runs during structure starts): as NetherFossilStructureMixin."),
+            lithostitched("template.ShipwreckStructureMixin",
+                    "generatePieces (runs during structure starts): as NetherFossilStructureMixin."),
+            lithostitched("template.mansion.FloorRoomCollectionMixin",
+                    "Adds a registries field to the per-mansion room collections vanilla creates for each mansion."),
+            lithostitched("template.mansion.PiecePlacerMixin",
+                    "createMansion (runs during structure starts): writes registries into the per-mansion MansionPiecePlacer."),
+            lithostitched("template.mansion.WoodlandMansionPieceMixin",
+                    "makeLocation (runs during structure starts): reads registries, no shared writes."),
+            lithostitched("template.mansion.WoodlandMansionStructureMixin",
+                    "generatePieces (runs during structure starts): hands registries to the per-mansion placer."),
+            lithostitched("template.mansion.floor.FirstFloorMixin",
+                    "Room pickers (runs during structure starts): read the per-mansion registries and the static breaksSeedParity flag."),
+            lithostitched("template.mansion.floor.SecondFloorMixin",
+                    "As FirstFloorMixin."),
+            lithostitched("template.mansion.floor.ThirdFloorMixin",
+                    "As FirstFloorMixin."),
+            lithostitched("processor.EndCityPieceMixin",
+                    "makeSettings (piece constructors, runs during structure starts) builds the piece's own StructurePlaceSettings with a new UnboundReferenceProcessor; its other handlers runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.IglooPieceMixin",
+                    "makeSettings (piece constructors, runs during structure starts) builds the piece's own StructurePlaceSettings with a new UnboundReferenceProcessor; its other handlers runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.NetherFossilPieceMixin",
+                    "makeSettings (piece constructors, runs during structure starts) builds the piece's own StructurePlaceSettings with a new UnboundReferenceProcessor; its other handlers runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.OceanRuinPieceMixin",
+                    "makeSettings (piece constructors, runs during structure starts) builds the piece's own StructurePlaceSettings with a new UnboundReferenceProcessor; its other handlers runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.RuinedPortalPieceMixin",
+                    "makeSettings (piece constructors, runs during structure starts) builds the piece's own StructurePlaceSettings with a new UnboundReferenceProcessor; its other handlers runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.ShipwreckPieceMixin",
+                    "makeSettings (piece constructors, runs during structure starts) builds the piece's own StructurePlaceSettings with a new UnboundReferenceProcessor; its other handlers runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.WoodlandMansionPieceMixin",
+                    "makeSettings (piece constructors, runs during structure starts) builds the piece's own StructurePlaceSettings with a new UnboundReferenceProcessor; its other handlers runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.DesertPyramidStructureMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.MineshaftCorridorMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.MineshaftPieceMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.MonsterThroneMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.PortalRoomMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.StructurePieceMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.StructureStartMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
+            lithostitched("processor.WoodlandMansionStructureMixin",
+                    "Its handlers (postProcess, placeInChunk, afterPlace, placeBlock, createChest, ...) runs only when the structure is placed into the world (features stage), which O3 does not move."),
             lithostitched("compat.terrablender.NoiseBasedChunkGeneratorMixin",
                     "Wraps biome resolution in doCreateBiomes, the biomes stage, which vanilla already runs on worker threads."));
 
@@ -84,6 +155,32 @@ public final class ReviewedPatches {
 
     private static Patch lithostitched(String mixin, String finding) {
         return new Patch(LITHOSTITCHED, LITHOSTITCHED_REVIEWED, LITHOSTITCHED_CONFIG, LITHOSTITCHED_MIXINS + mixin, finding);
+    }
+
+    /** A mod-added type (by registry id) that runs in a moved stage and was reviewed as safe. */
+    public record ReviewedType(String modId, String version, String typeId, String finding) {
+    }
+
+    public static final List<ReviewedType> TYPES = List.of(
+            new ReviewedType(LITHOSTITCHED, LITHOSTITCHED_REVIEWED, "lithostitched:internal/random_entries",
+                    "Pool-alias binding (structure starts): an immutable record that picks pools with the caller's random source."));
+
+    /** Mod-added types split into those reviewed for the installed version, and the rest (with why). */
+    public static Split splitTypes(List<String> types, Map<String, String> modVersions) {
+        List<String> reviewed = new ArrayList<>();
+        List<String> unreviewed = new ArrayList<>();
+        for (String type : types) {
+            ReviewedType known = TYPES.stream().filter(t -> t.typeId().equals(type)).findFirst().orElse(null);
+            if (known == null) {
+                unreviewed.add(type);
+            } else if (known.version().equals(modVersions.get(known.modId()))) {
+                reviewed.add(type);
+            } else {
+                unreviewed.add(type + " (reviewed for " + known.modId() + " " + known.version() + ", installed: "
+                        + modVersions.getOrDefault(known.modId(), "none") + ")");
+            }
+        }
+        return new Split(List.copyOf(reviewed), List.copyOf(unreviewed));
     }
 
     /** Every reviewed patch. */

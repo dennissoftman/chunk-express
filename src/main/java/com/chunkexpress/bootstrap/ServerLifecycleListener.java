@@ -43,10 +43,11 @@ public final class ServerLifecycleListener {
                 Thread.currentThread(),
                 compat);
         ChunkExpressRuntime.install(runtime);
-        Logs.LOG.info("Chunk Express {} starting (server: {}; optimisations: surface {}, carvers {}; instrumentation {}; "
-                        + "region writes {}).",
+        Logs.LOG.info("Chunk Express {} starting (server: {}; optimisations: surface {}, carvers {}, structure starts {}; "
+                        + "instrumentation {}; region writes {}).",
                 ChunkExpress.version(), runtime.serverKind(), settings.offloadSurface() ? "on" : "off",
-                settings.offloadCarvers() ? "on" : "off", settings.instrumentation() ? "on" : "off",
+                settings.offloadCarvers() ? "on" : "off", settings.offloadStructureStarts() ? "on" : "off",
+                settings.instrumentation() ? "on" : "off",
                 runtime.synchronousWrites() ? "synchronous (DSYNC)" : "OS-buffered");
         for (String line : compat.describe()) {
             Logs.LOG.info("Chunk Express compatibility: {}", line);

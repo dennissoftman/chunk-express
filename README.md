@@ -2,6 +2,13 @@
 
 # Chunk Express
 
+[![Build](https://github.com/dennissoftman/chunk-express/actions/workflows/build.yml/badge.svg)](https://github.com/dennissoftman/chunk-express/actions/workflows/build.yml)
+[![Release](https://img.shields.io/github/v/release/dennissoftman/chunk-express?include_prereleases&label=release)](https://github.com/dennissoftman/chunk-express/releases/latest)
+[![Modrinth](https://img.shields.io/badge/Modrinth-chunk--express-00AF5C)](https://modrinth.com/mod/chunk-express)
+![Minecraft 1.21.1](https://img.shields.io/badge/Minecraft-1.21.1-62B47A)
+![NeoForge 21.1](https://img.shields.io/badge/NeoForge-21.1.265%2B-E68A00)
+[![Licence](https://img.shields.io/badge/licence-GPL--3.0--only-blue)](LICENSE)
+
 Faster world generation for Minecraft 1.21.1 (NeoForge) **that never changes your world.**
 
 Chunk Express finds the parts of vanilla chunk generation that can safely run on your spare CPU
@@ -9,8 +16,10 @@ cores, moves exactly those, and proves the terrain stays bit-identical to vanill
 the vanilla chunk system and warns you when vanilla is about to silently overwrite damaged world
 data.
 
-> **Status: in development, not yet released.** The first public build will be a Beta once the
-> checks in [docs/RELEASE_CRITERIA.md](docs/RELEASE_CRITERIA.md) pass.
+> **Beta.** Download the jar from [Releases](https://github.com/dennissoftman/chunk-express/releases)
+> (or [Modrinth](https://modrinth.com/mod/chunk-express)) and put it in your `mods` folder. Back up your
+> worlds and please [report](https://github.com/dennissoftman/chunk-express/issues) anything odd.
+> What was checked before this release: [docs/RELEASE_CRITERIA.md](docs/RELEASE_CRITERIA.md).
 
 ## What it does
 
